@@ -212,7 +212,7 @@ window.addEventListener("DOMContentLoaded", () => {
         tempChart.data.labels.shift();
         tempChart.data.datasets[0].data.shift();
       }
-      tempChart.update('none');   // no animation
+      tempChart.update('none');   // no animation, stable axes [web:286]
     }
 
     // Humidity
