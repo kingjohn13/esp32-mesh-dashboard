@@ -18,7 +18,7 @@ const state = {
 
 let sampleCounter = 0;
 
-// Clamp any value to [0, 60]
+// Clamp helpers
 function clampTo60(value) {
   if (value == null || isNaN(value)) return 0;
   if (value < 0) return 0;
@@ -26,10 +26,17 @@ function clampTo60(value) {
   return value;
 }
 
-// Shared chart options with same y-axis 0–60
-const commonChartOptions = {
+function clampTo100(value) {
+  if (value == null || isNaN(value)) return 0;
+  if (value < 0) return 0;
+  if (value > 100) return 100;
+  return value;
+}
+
+// Chart options
+const options0to60 = {
   responsive: true,
-  maintainAspectRatio: false, // respect CSS height [web:229][web:246]
+  maintainAspectRatio: false,
   animation: { duration: 250, easing: "easeOutQuad" },
   plugins: { legend: { display: false } },
   scales: {
@@ -62,6 +69,41 @@ const commonChartOptions = {
   }
 };
 
+const options0to100 = {
+  responsive: true,
+  maintainAspectRatio: false,
+  animation: { duration: 250, easing: "easeOutQuad" },
+  plugins: { legend: { display: false } },
+  scales: {
+    x: {
+      ticks: {
+        color: "rgba(197,198,199,0.6)",
+        maxRotation: 0,
+        autoSkip: true,
+        maxTicksLimit: 4,
+        font: { size: 8 }
+      },
+      grid: {
+        color: "rgba(255,255,255,0.04)",
+        drawBorder: false
+      }
+    },
+    y: {
+      min: 0,
+      max: 100,
+      ticks: {
+        color: "rgba(197,198,199,0.7)",
+        font: { size: 8 },
+        stepSize: 20
+      },
+      grid: {
+        color: "rgba(255,255,255,0.04)",
+        drawBorder: false
+      }
+    }
+  }
+};
+
 // Run only after DOM is ready
 window.addEventListener("DOMContentLoaded", () => {
   // ==== DOM ====
@@ -76,7 +118,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const lastUpdateSpan = document.getElementById("last-update");
   const eventLog = document.getElementById("event-log");
 
-  // ==== Charts: three line charts ====
+  // ==== Charts: 3 separate canvases ====
   const tempChart = new Chart(
     document.getElementById("temp-chart").getContext("2d"),
     {
@@ -94,7 +136,7 @@ window.addEventListener("DOMContentLoaded", () => {
           fill: true
         }]
       },
-      options: commonChartOptions
+      options: options0to60
     }
   );
 
@@ -115,7 +157,7 @@ window.addEventListener("DOMContentLoaded", () => {
           fill: true
         }]
       },
-      options: commonChartOptions
+      options: options0to100
     }
   );
 
@@ -136,7 +178,7 @@ window.addEventListener("DOMContentLoaded", () => {
           fill: true
         }]
       },
-      options: commonChartOptions
+      options: options0to60
     }
   );
 
@@ -150,9 +192,9 @@ window.addEventListener("DOMContentLoaded", () => {
     });
     const MAX_POINTS = 10;
 
-    const cTemp = temp != null ? clampTo60(temp) : null;
-    const cHum  = hum  != null ? clampTo60(hum)  : null;
-    const cDist = dist != null ? clampTo60(dist) : null;
+    const cTemp = temp != null ? clampTo60(temp)   : null;
+    const cHum  = hum  != null ? clampTo100(hum)  : null;
+    const cDist = dist != null ? clampTo60(dist)  : null;
 
     // Temp
     if (cTemp != null) {
@@ -220,7 +262,7 @@ window.addEventListener("DOMContentLoaded", () => {
   // ==== UI update ====
   function updateUI() {
     if (state.temp != null) tempSpan.textContent = clampTo60(state.temp).toFixed(1);
-    if (state.hum != null) humSpan.textContent = clampTo60(state.hum).toFixed(1);
+    if (state.hum != null) humSpan.textContent = clampTo100(state.hum).toFixed(1);
     if (state.dist != null) distSpan.textContent = clampTo60(state.dist).toFixed(1);
 
     nodeIdSpan.textContent = state.nodeId ?? "-";
@@ -262,7 +304,7 @@ window.addEventListener("DOMContentLoaded", () => {
     state.neighbors = payload.neighbors ?? state.neighbors;
 
     if (typeof payload.temp === "number") state.temp = clampTo60(payload.temp);
-    if (typeof payload.hum === "number") state.hum = clampTo60(payload.hum);
+    if (typeof payload.hum === "number") state.hum = clampTo100(payload.hum);
     if (typeof payload.dist === "number") state.dist = clampTo60(payload.dist);
 
     setConnected(true);
