@@ -1,3 +1,10 @@
+// ==== CONFIG: HIVEMQ CLOUD ====
+const MQTT_WS_URL =
+  'wss://63a94dada2fa46b797e4d6fdf720f43f.s1.eu.hivemq.cloud:8884/mqtt';
+const MQTT_USERNAME = 'JunJuly';   // <-- change
+const MQTT_PASSWORD = 'JuneJuly1';   // <-- change
+const MQTT_TOPIC = 'esp32/mesh/debug';        // match your ESP32 publish topic
+
 // ==== Simple local state ====
 const state = {
   temp: null,
@@ -107,10 +114,8 @@ function addEventLogEntry(payload) {
   li.appendChild(timeSpan);
   li.appendChild(text);
 
-  // add to top
   eventLog.insertBefore(li, eventLog.firstChild);
 
-  // limit entries
   while (eventLog.children.length > 30) {
     eventLog.removeChild(eventLog.lastChild);
   }
@@ -134,13 +139,12 @@ function updateUI() {
   const now = new Date();
   lastUpdateSpan.textContent = "Last update: " + now.toLocaleTimeString();
 
-  // charts
   pushToChart(tempChart, state.temp);
   pushToChart(humChart, state.hum);
   pushToChart(distChart, state.dist);
 }
 
-// ==== Connection badge helpers (hook to real MQTT later) ====
+// ==== Connection badge helpers ====
 function setConnected(flag) {
   if (!connStatus) return;
   if (flag) {
@@ -169,29 +173,73 @@ window.updateFromPayload = function (payload) {
   addEventLogEntry(payload);
 };
 
-// ==== Demo: fake data to test UI without MQTT ====
-// remove this block later when wiring real broker
-(function demoFake() {
-  let t = 25.0;
-  let h = 60.0;
-  let d = 100.0;
+// ==== MQTT: connect to HiveMQ Cloud over WebSockets ====
+(function setupMqtt() {
+  const options = {
+    clientId: 'web_' + Math.random().toString(16).slice(2),
+    clean: true,
+    connectTimeout: 5000,
+    reconnectPeriod: 3000,
+    username: MQTT_USERNAME,
+    password: MQTT_PASSWORD
+  };
 
-  setInterval(() => {
-    t += 0.1;
-    if (t > 30) t = 25;
-    h += 0.2;
-    if (h > 70) h = 60;
-    d += 1;
-    if (d > 120) d = 100;
+  const client = mqtt.connect(MQTT_WS_URL, options);
 
-    window.updateFromPayload({
-      nodeId: "258509481",
-      role: "ROOT",
-      nodes: 2,
-      neighbors: ["3637930473"],
-      temp: t,
-      hum: h,
-      dist: d
+  client.on('connect', () => {
+    console.log('Connected to HiveMQ via WebSockets');
+    setConnected(true);
+    client.subscribe(MQTT_TOPIC, (err) => {
+      if (err) console.error('Subscribe error:', err);
+      else console.log('Subscribed to', MQTT_TOPIC);
     });
-  }, 3000);
+  });
+
+  client.on('reconnect', () => {
+    console.log('Reconnecting...');
+  });
+
+  client.on('close', () => {
+    console.log('Connection closed');
+    setConnected(false);
+  });
+
+  client.on('error', (err) => {
+    console.error('MQTT error:', err);
+    setConnected(false);
+  });
+
+  client.on('message', (topic, message) => {
+    const s = message.toString();
+    // example payload:
+    // 258509481,ROOT,1,3637930473,TEMP=25.7,HUM=61.0,DIST=102.0
+    const parts = s.split(',');
+
+    const payload = {
+      nodeId: null,
+      role: null,
+      nodes: 0,
+      neighbors: [],
+      temp: null,
+      hum: null,
+      dist: null
+    };
+
+    if (parts.length >= 3) {
+      payload.nodeId = parts[0];
+      payload.role = parts[1];
+      payload.nodes = Number(parts[2]) || 0;
+    }
+
+    parts.forEach(p => {
+      if (p.startsWith('TEMP=')) payload.temp = Number(p.slice(5));
+      else if (p.startsWith('HUM=')) payload.hum = Number(p.slice(4));
+      else if (p.startsWith('DIST=')) payload.dist = Number(p.slice(5));
+      else if (!isNaN(Number(p)) && p !== payload.nodeId) {
+        payload.neighbors.push(p);
+      }
+    });
+
+    window.updateFromPayload(payload);
+  });
 })();
