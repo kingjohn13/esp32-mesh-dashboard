@@ -168,7 +168,7 @@ main.layout {
   color: var(--accent-soft);
 }
 
-/* Chart panel: fixed size, charts inside fixed area */
+/* Chart panel: fixed size 720px */
 
 .panel.panel-chart {
   display: flex;
@@ -177,12 +177,12 @@ main.layout {
   height: 720px;     /* fixed height for the entire charts panel */
 }
 
-/* Charts: 3 stacked vertically inside fixed panel */
+/* Charts: 3 × 240px inside fixed panel */
 
 .charts-grid {
   display: grid;
-  grid-template-columns: 1fr;          /* single column */
-  grid-template-rows: repeat(3, 1fr);  /* 3 equal rows */
+  grid-template-columns: 1fr;            /* single column */
+  grid-template-rows: repeat(3, 240px);  /* 3 rows, 240px each */
   gap: 0.4rem;
   flex: 1;
   min-height: 0;
@@ -202,10 +202,11 @@ main.layout {
   margin-bottom: 0.1rem;
 }
 
-/* Fixed chart height and width (full width of panel) */
+/* Fixed chart height and width */
+
 .chart-item canvas {
   width: 100% !important;
-  height: 240px !important;   /* fixed per-chart height */
+  height: calc(240px - 0.9rem) !important; /* title margin spacing */
 }
 
 /* Info + log */
