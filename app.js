@@ -33,14 +33,18 @@ function clampTo100(value) {
   return value;
 }
 
-// Chart options
+// Chart options (axes fixed, no animation)
 const options0to60 = {
-  responsive: true,
+  responsive: false,               // lock chart size [web:227][web:229]
   maintainAspectRatio: false,
-  animation: { duration: 250, easing: "easeOutQuad" },
+  animation: false,                // no movement during updates [web:286]
+  layout: {
+    padding: 0
+  },
   plugins: { legend: { display: false } },
   scales: {
     x: {
+      offset: false,
       ticks: {
         color: "rgba(197,198,199,0.6)",
         maxRotation: 0,
@@ -70,12 +74,16 @@ const options0to60 = {
 };
 
 const options0to100 = {
-  responsive: true,
+  responsive: false,
   maintainAspectRatio: false,
-  animation: { duration: 250, easing: "easeOutQuad" },
+  animation: false,
+  layout: {
+    padding: 0
+  },
   plugins: { legend: { display: false } },
   scales: {
     x: {
+      offset: false,
       ticks: {
         color: "rgba(197,198,199,0.6)",
         maxRotation: 0,
@@ -204,7 +212,7 @@ window.addEventListener("DOMContentLoaded", () => {
         tempChart.data.labels.shift();
         tempChart.data.datasets[0].data.shift();
       }
-      tempChart.update();
+      tempChart.update('none');   // no animation
     }
 
     // Humidity
@@ -215,7 +223,7 @@ window.addEventListener("DOMContentLoaded", () => {
         humChart.data.labels.shift();
         humChart.data.datasets[0].data.shift();
       }
-      humChart.update();
+      humChart.update('none');
     }
 
     // Distance
@@ -226,7 +234,7 @@ window.addEventListener("DOMContentLoaded", () => {
         distChart.data.labels.shift();
         distChart.data.datasets[0].data.shift();
       }
-      distChart.update();
+      distChart.update('none');
     }
   }
 
