@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ESP32 Mesh Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Chart.js for simple charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header class="top-bar">
+    <div class="brand">ESP32 Mesh Dashboard</div>
+    <div class="status">
+      <span id="conn-status" class="badge badge-disconnected">Disconnected</span>
+      <span id="last-update" class="last-update">Last update: -</span>
+    </div>
+  </header>
+
+  <main class="grid">
+    <!-- Temperature card -->
+    <section class="card">
+      <h2>Temperature</h2>
+      <div class="value-row">
+        <span id="temp-value" class="big-value">--.-</span>
+        <span class="unit">°C</span>
+      </div>
+      <canvas id="temp-chart" height="120"></canvas>
+    </section>
+
+    <!-- Humidity card -->
+    <section class="card">
+      <h2>Humidity</h2>
+      <div class="value-row">
+        <span id="hum-value" class="big-value">--.-</span>
+        <span class="unit">%</span>
+      </div>
+      <canvas id="hum-chart" height="120"></canvas>
+    </section>
+
+    <!-- Distance card -->
+    <section class="card">
+      <h2>Distance</h2>
+      <div class="value-row">
+        <span id="dist-value" class="big-value">--.-</span>
+        <span class="unit">cm</span>
+      </div>
+      <canvas id="dist-chart" height="120"></canvas>
+    </section>
+
+    <!-- Mesh info -->
+    <section class="card wide">
+      <h2>Mesh Info</h2>
+      <div class="mesh-info">
+        <div>Node ID: <span id="node-id">-</span></div>
+        <div>Role: <span id="node-role">-</span></div>
+        <div>Nodes in Mesh: <span id="node-count">0</span></div>
+        <div>Neighbors: <span id="neighbors">-</span></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
