@@ -168,9 +168,30 @@ main.layout {
   color: var(--accent-soft);
 }
 
-/* Chart panel */
+/* Charts: 3 slim “scope” panels */
 
-.panel-chart canvas {
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem;
+  height: 100%;
+}
+
+.chart-item {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.chart-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(197, 198, 199, 0.8);
+  margin-bottom: 0.15rem;
+}
+
+.chart-item canvas {
   width: 100% !important;
   flex: 1;
 }
@@ -231,6 +252,10 @@ main.layout {
   .bottom {
     grid-template-columns: 1fr;
     min-height: auto;
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
   }
 }
 
