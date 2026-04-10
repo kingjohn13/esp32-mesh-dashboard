@@ -140,7 +140,7 @@ main.layout {
   opacity: 0.8;
 }
 
-/* Bottom row */
+/* Bottom row layout */
 
 .bottom {
   display: grid;
@@ -168,48 +168,34 @@ main.layout {
   color: var(--accent-soft);
 }
 
-/* Chart panel: fixed size 720px */
+/* Left column: three separate chart boxes */
 
-.panel.panel-chart {
+.charts-column {
+  display: grid;
+  grid-template-rows: repeat(3, 1fr);
+  gap: 0.6rem;
+  min-height: 0;
+}
+
+.panel.panel-chart-single {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  height: 720px;     /* fixed height for the entire charts panel */
 }
 
-/* Charts: 3 × 240px inside fixed panel */
-
-.charts-grid {
-  display: grid;
-  grid-template-columns: 1fr;            /* single column */
-  grid-template-rows: repeat(3, 240px);  /* 3 rows, 240px each */
-  gap: 0.4rem;
+.chart-wrapper {
   flex: 1;
   min-height: 0;
 }
 
-.chart-item {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
+/* Each chart ~240px high */
 
-.chart-title {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(197, 198, 199, 0.8);
-  margin-bottom: 0.1rem;
-}
-
-/* Fixed chart height and width */
-
-.chart-item canvas {
+.chart-wrapper canvas {
   width: 100% !important;
-  height: calc(240px - 0.9rem) !important; /* title margin spacing */
+  height: 240px !important;
 }
 
-/* Info + log */
+/* Info + log (right column) */
 
 .mesh-info {
   display: grid;
@@ -265,6 +251,10 @@ main.layout {
   .bottom {
     grid-template-columns: 1fr;
     min-height: auto;
+  }
+
+  .charts-column {
+    grid-template-rows: auto;
   }
 }
 
