@@ -16,6 +16,8 @@ const state = {
   neighbors: []
 };
 
+let sampleCounter = 0;
+
 // Run only after DOM is ready
 window.addEventListener("DOMContentLoaded", () => {
   // ==== DOM ====
@@ -37,7 +39,7 @@ window.addEventListener("DOMContentLoaded", () => {
   }
   const ctx = canvas.getContext("2d");
 
-  // ==== Chart (combined) ====
+  // ==== Chart (combined, smoother) ====
   const combinedChart = new Chart(ctx, {
     type: "line",
     data: {
@@ -46,30 +48,30 @@ window.addEventListener("DOMContentLoaded", () => {
         {
           label: "Temp °C",
           data: [],
-          borderColor: "#66fcf1",
-          backgroundColor: "#66fcf122",
+          borderColor: "#ff6b6b",       // warm red
+          backgroundColor: "#ff6b6b22",
           borderWidth: 2,
-          tension: 0.25,
+          tension: 0.4,
           pointRadius: 0,
           yAxisID: "y1"
         },
         {
           label: "Humidity %",
           data: [],
-          borderColor: "#45a29e",
-          backgroundColor: "#45a29e22",
+          borderColor: "#1e90ff",       // blue
+          backgroundColor: "#1e90ff22",
           borderWidth: 2,
-          tension: 0.25,
+          tension: 0.4,
           pointRadius: 0,
           yAxisID: "y2"
         },
         {
           label: "Distance cm",
           data: [],
-          borderColor: "#f2c94c",
+          borderColor: "#f2c94c",       // yellow
           backgroundColor: "#f2c94c22",
           borderWidth: 2,
-          tension: 0.25,
+          tension: 0.4,
           pointRadius: 0,
           yAxisID: "y3"
         }
@@ -78,6 +80,10 @@ window.addEventListener("DOMContentLoaded", () => {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: {
+        duration: 400,
+        easing: "easeOutQuad"
+      },
       plugins: {
         legend: {
           position: "top",
@@ -86,19 +92,24 @@ window.addEventListener("DOMContentLoaded", () => {
       },
       scales: {
         x: {
-          ticks: { color: "#c5c6c7", maxRotation: 0, autoSkip: true },
+          ticks: {
+            color: "#c5c6c7",
+            maxRotation: 0,
+            autoSkip: true,
+            maxTicksLimit: 6
+          },
           grid: { color: "rgba(255,255,255,0.05)" }
         },
         y1: {
           type: "linear",
           position: "left",
-          ticks: { color: "#66fcf1", font: { size: 9 } },
+          ticks: { color: "#ff6b6b", font: { size: 9 } },
           grid: { color: "rgba(255,255,255,0.05)" }
         },
         y2: {
           type: "linear",
           position: "right",
-          ticks: { color: "#45a29e", font: { size: 9 } },
+          ticks: { color: "#1e90ff", font: { size: 9 } },
           grid: { display: false }
         },
         y3: {
@@ -119,19 +130,27 @@ window.addEventListener("DOMContentLoaded", () => {
     const d3 = combinedChart.data.datasets[2].data;
 
     const now = new Date();
-    const t = now.toLocaleTimeString("en-US", { hour12: false });
+    const t = now.toLocaleTimeString("en-US", {
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
 
     labels.push(t);
     d1.push(temp != null ? temp : null);
     d2.push(hum != null ? hum : null);
     d3.push(dist != null ? dist : null);
 
-    if (labels.length > 60) {
+    // keep last ~40 points
+    if (labels.length > 40) {
       labels.shift();
-      d1.shift(); d2.shift(); d3.shift();
+      d1.shift();
+      d2.shift();
+      d3.shift();
     }
 
-    combinedChart.update("none");
+    combinedChart.update();
   }
 
   // ==== Event log ====
@@ -198,8 +217,10 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // ==== Update from parsed payload ====
+  // ==== Update from parsed payload with light throttling ====
   window.updateFromPayload = function (payload) {
+    sampleCounter++;
+
     state.nodeId = payload.nodeId ?? state.nodeId;
     state.role = payload.role ?? state.role;
     state.nodes = payload.nodes ?? state.nodes;
@@ -209,8 +230,17 @@ window.addEventListener("DOMContentLoaded", () => {
     if (typeof payload.dist === "number") state.dist = payload.dist;
 
     setConnected(true);
-    updateUI();
-    addEventLogEntry(payload);
+
+    // Only animate chart + log every 2nd message
+    if (sampleCounter % 2 === 0) {
+      updateUI();
+      addEventLogEntry(payload);
+    } else {
+      // Still keep numbers fresh
+      if (state.temp != null) tempSpan.textContent = state.temp.toFixed(1);
+      if (state.hum != null) humSpan.textContent = state.hum.toFixed(1);
+      if (state.dist != null) distSpan.textContent = state.dist.toFixed(1);
+    }
   };
 
   // ==== MQTT: connect to HiveMQ Cloud ====
