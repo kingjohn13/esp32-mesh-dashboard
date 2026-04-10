@@ -19,6 +19,7 @@ const nodeCountSpan = document.getElementById("node-count");
 const neighborsSpan = document.getElementById("neighbors");
 const connStatus = document.getElementById("conn-status");
 const lastUpdateSpan = document.getElementById("last-update");
+const eventLog = document.getElementById("event-log");
 
 // ==== Charts setup ====
 function createLineChart(ctx, color) {
@@ -84,6 +85,37 @@ function pushToChart(chart, value) {
   chart.update("none");
 }
 
+// ==== Event log ====
+function addEventLogEntry(payload) {
+  if (!eventLog) return;
+  const li = document.createElement("li");
+
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString("en-US", { hour12: false });
+
+  const timeSpan = document.createElement("span");
+  timeSpan.className = "event-log-time";
+  timeSpan.textContent = timeStr;
+
+  const text = document.createTextNode(
+    `ID=${payload.nodeId ?? "-"} ROLE=${payload.role ?? "-"} ` +
+      `TEMP=${payload.temp?.toFixed?.(1) ?? "-"} ` +
+      `HUM=${payload.hum?.toFixed?.(1) ?? "-"} ` +
+      `DIST=${payload.dist?.toFixed?.(1) ?? "-"}`
+  );
+
+  li.appendChild(timeSpan);
+  li.appendChild(text);
+
+  // add to top
+  eventLog.insertBefore(li, eventLog.firstChild);
+
+  // limit entries
+  while (eventLog.children.length > 30) {
+    eventLog.removeChild(eventLog.lastChild);
+  }
+}
+
 // ==== UI update ====
 function updateUI() {
   if (state.temp != null) tempSpan.textContent = state.temp.toFixed(1);
@@ -108,7 +140,7 @@ function updateUI() {
   pushToChart(distChart, state.dist);
 }
 
-// ==== Connection badge helpers (we'll hook to real connection later) ====
+// ==== Connection badge helpers (hook to real MQTT later) ====
 function setConnected(flag) {
   if (!connStatus) return;
   if (flag) {
@@ -122,18 +154,8 @@ function setConnected(flag) {
   }
 }
 
-// Call this with parsed payload
+// Expose for MQTT / other inputs
 window.updateFromPayload = function (payload) {
-  // payload example:
-  // {
-  //   nodeId: "258509481",
-  //   role: "ROOT",
-  //   nodes: 1,
-  //   neighbors: ["3637930473"],
-  //   temp: 25.7,
-  //   hum: 61.0,
-  //   dist: 102.0
-  // }
   state.nodeId = payload.nodeId ?? state.nodeId;
   state.role = payload.role ?? state.role;
   state.nodes = payload.nodes ?? state.nodes;
@@ -144,9 +166,11 @@ window.updateFromPayload = function (payload) {
 
   setConnected(true);
   updateUI();
+  addEventLogEntry(payload);
 };
 
 // ==== Demo: fake data to test UI without MQTT ====
+// remove this block later when wiring real broker
 (function demoFake() {
   let t = 25.0;
   let h = 60.0;
