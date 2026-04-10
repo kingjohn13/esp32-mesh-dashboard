@@ -5,13 +5,9 @@
   <title>ESP32 Mesh Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Styles -->
   <link rel="stylesheet" href="style.css" />
 
-  <!-- Chart.js for simple charts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- MQTT.js (we'll wire this later) -->
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 </head>
 <body>
@@ -23,52 +19,52 @@
     </div>
   </header>
 
-  <main class="grid">
-    <!-- Temperature card -->
-    <section class="card">
-      <h2>Temperature</h2>
-      <div class="value-row">
-        <span id="temp-value" class="big-value">--.-</span>
-        <span class="unit">°C</span>
+  <main class="layout">
+    <!-- Top row: compact tiles -->
+    <section class="tiles">
+      <div class="tile">
+        <div class="tile-label">Temp</div>
+        <div class="tile-main">
+          <span id="temp-value" class="tile-value">--.-</span>
+          <span class="tile-unit">°C</span>
+        </div>
       </div>
-      <canvas id="temp-chart" height="120"></canvas>
-    </section>
 
-    <!-- Humidity card -->
-    <section class="card">
-      <h2>Humidity</h2>
-      <div class="value-row">
-        <span id="hum-value" class="big-value">--.-</span>
-        <span class="unit">%</span>
+      <div class="tile">
+        <div class="tile-label">Humidity</div>
+        <div class="tile-main">
+          <span id="hum-value" class="tile-value">--.-</span>
+          <span class="tile-unit">%</span>
+        </div>
       </div>
-      <canvas id="hum-chart" height="120"></canvas>
-    </section>
 
-    <!-- Distance card -->
-    <section class="card">
-      <h2>Distance</h2>
-      <div class="value-row">
-        <span id="dist-value" class="big-value">--.-</span>
-        <span class="unit">cm</span>
-      </div>
-      <canvas id="dist-chart" height="120"></canvas>
-    </section>
-
-    <!-- Mesh info -->
-    <section class="card wide">
-      <h2>Mesh Info</h2>
-      <div class="mesh-info">
-        <div>Node ID: <span id="node-id">-</span></div>
-        <div>Role: <span id="node-role">-</span></div>
-        <div>Nodes in Mesh: <span id="node-count">0</span></div>
-        <div>Neighbors: <span id="neighbors">-</span></div>
+      <div class="tile">
+        <div class="tile-label">Distance</div>
+        <div class="tile-main">
+          <span id="dist-value" class="tile-value">--.-</span>
+          <span class="tile-unit">cm</span>
+        </div>
       </div>
     </section>
 
-    <!-- Event log -->
-    <section class="card wide">
-      <h2>Event Log</h2>
-      <ul id="event-log" class="event-log"></ul>
+    <!-- Bottom row: chart + info + log -->
+    <section class="bottom">
+      <div class="panel panel-chart">
+        <h2>Live Chart</h2>
+        <canvas id="combined-chart"></canvas>
+      </div>
+
+      <div class="panel panel-info">
+        <h2>Mesh Info</h2>
+        <div class="mesh-info">
+          <div>Node ID: <span id="node-id">-</span></div>
+          <div>Role: <span id="node-role">-</span></div>
+          <div>Nodes in Mesh: <span id="node-count">0</span></div>
+          <div>Neighbors: <span id="neighbors">-</span></div>
+        </div>
+        <h2 class="log-title">Event Log</h2>
+        <ul id="event-log" class="event-log"></ul>
+      </div>
     </section>
   </main>
 
