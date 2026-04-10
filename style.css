@@ -190,8 +190,8 @@ main.layout {
 /* Each chart ~240px high */
 
 .chart-wrapper canvas {
-  width: 100% !important;
-  height: 100% !important;
+  width: 90% !important;
+  height: 90% !important;
 }
 
 /* Info + log (right column) */
