@@ -39,7 +39,7 @@ window.addEventListener("DOMContentLoaded", () => {
   }
   const ctx = canvas.getContext("2d");
 
-  // ==== Chart (combined, smoother, 10 points) ====
+  // ==== Chart (Temp, Humidity, Distance scope style, last 10 points) ====
   const combinedChart = new Chart(ctx, {
     type: "line",
     data: {
@@ -48,31 +48,34 @@ window.addEventListener("DOMContentLoaded", () => {
         {
           label: "Temp °C",
           data: [],
-          borderColor: "#ff6b6b",       // warm red
-          backgroundColor: "#ff6b6b22",
+          borderColor: "#ff6b6b",
+          backgroundColor: "rgba(255,107,107,0.25)",
           borderWidth: 2,
           tension: 0.4,
           pointRadius: 0,
+          fill: true,
           yAxisID: "yLeft"
         },
         {
           label: "Humidity %",
           data: [],
-          borderColor: "#1e90ff",       // blue
-          backgroundColor: "#1e90ff22",
+          borderColor: "#1e90ff",
+          backgroundColor: "rgba(30,144,255,0.25)",
           borderWidth: 2,
           tension: 0.4,
           pointRadius: 0,
+          fill: true,
           yAxisID: "yLeft"
         },
         {
           label: "Distance cm",
           data: [],
-          borderColor: "#f2c94c",       // yellow
-          backgroundColor: "#f2c94c11",
-          borderWidth: 1.5,
+          borderColor: "#f2c94c",
+          backgroundColor: "rgba(242,201,76,0.18)",
+          borderWidth: 1.8,
           tension: 0.4,
           pointRadius: 0,
+          fill: true,
           yAxisID: "yRight"
         }
       ]
@@ -81,46 +84,90 @@ window.addEventListener("DOMContentLoaded", () => {
       responsive: true,
       maintainAspectRatio: false,
       animation: {
-        duration: 350,
+        duration: 300,
         easing: "easeOutQuad"
       },
       plugins: {
         legend: {
           position: "top",
-          labels: { color: "#c5c6c7", boxWidth: 8, font: { size: 10 } }
+          labels: {
+            color: "#c5c6c7",
+            boxWidth: 8,
+            font: { size: 10 }
+          }
+        },
+        tooltip: {
+          enabled: true,
+          backgroundColor: "rgba(15,20,30,0.9)",
+          borderColor: "rgba(255,255,255,0.15)",
+          borderWidth: 1,
+          titleColor: "#ffffff",
+          bodyColor: "#c5c6c7",
+          displayColors: true
         }
       },
       scales: {
         x: {
           ticks: {
-            color: "#c5c6c7",
+            color: "rgba(197,198,199,0.7)",
             maxRotation: 0,
             autoSkip: true,
-            maxTicksLimit: 6
+            maxTicksLimit: 6,
+            font: { size: 9 }
           },
-          grid: { color: "rgba(255,255,255,0.05)" }
+          grid: {
+            color: "rgba(255,255,255,0.04)",
+            drawBorder: false
+          }
         },
         yLeft: {
           type: "linear",
           position: "left",
-          ticks: { color: "#ffffff", font: { size: 9 } },
-          grid: { color: "rgba(255,255,255,0.05)" }
+          ticks: {
+            color: "rgba(197,198,199,0.8)",
+            font: { size: 9 }
+          },
+          grid: {
+            color: "rgba(255,255,255,0.04)",
+            drawBorder: false
+          }
         },
         yRight: {
           type: "linear",
           position: "right",
-          ticks: { color: "#f2c94c", font: { size: 9 } },
+          ticks: {
+            color: "#f2c94c",
+            font: { size: 9 }
+          },
           grid: { display: false }
         }
       }
     }
   });
 
+  // Optional: per-line gradient fills (nicer)
+  const h = canvas.height || 200;
+  const gradTemp = ctx.createLinearGradient(0, 0, 0, h);
+  gradTemp.addColorStop(0, "rgba(255,107,107,0.35)");
+  gradTemp.addColorStop(1, "rgba(255,107,107,0)");
+
+  const gradHum = ctx.createLinearGradient(0, 0, 0, h);
+  gradHum.addColorStop(0, "rgba(30,144,255,0.35)");
+  gradHum.addColorStop(1, "rgba(30,144,255,0)");
+
+  const gradDist = ctx.createLinearGradient(0, 0, 0, h);
+  gradDist.addColorStop(0, "rgba(242,201,76,0.30)");
+  gradDist.addColorStop(1, "rgba(242,201,76,0)");
+
+  combinedChart.data.datasets[0].backgroundColor = gradTemp;
+  combinedChart.data.datasets[1].backgroundColor = gradHum;
+  combinedChart.data.datasets[2].backgroundColor = gradDist;
+
   function pushToCombinedChart(temp, hum, dist) {
     const labels = combinedChart.data.labels;
-    const d1 = combinedChart.data.datasets[0].data;
-    const d2 = combinedChart.data.datasets[1].data;
-    const d3 = combinedChart.data.datasets[2].data;
+    const dTemp = combinedChart.data.datasets[0].data;
+    const dHum = combinedChart.data.datasets[1].data;
+    const dDist = combinedChart.data.datasets[2].data;
 
     const now = new Date();
     const t = now.toLocaleTimeString("en-US", {
@@ -131,17 +178,16 @@ window.addEventListener("DOMContentLoaded", () => {
     });
 
     labels.push(t);
-    d1.push(temp != null ? temp : null);
-    d2.push(hum != null ? hum : null);
-    d3.push(dist != null ? dist : null);
+    dTemp.push(temp != null ? temp : null);
+    dHum.push(hum != null ? hum : null);
+    dDist.push(dist != null ? dist : null);
 
-    // keep only last 10 points
     const MAX_POINTS = 10;
     while (labels.length > MAX_POINTS) {
       labels.shift();
-      d1.shift();
-      d2.shift();
-      d3.shift();
+      dTemp.shift();
+      dHum.shift();
+      dDist.shift();
     }
 
     combinedChart.update();
