@@ -184,15 +184,14 @@ main.layout {
 }
 
 .chart-wrapper {
-  flex: 1;
-  min-height: 0;
+  height: 240px;
 }
 
 /* Each chart ~240px high */
 
 .chart-wrapper canvas {
   width: 100% !important;
-  height: 240px !important;
+  height: 100% !important;
 }
 
 /* Info + log (right column) */
