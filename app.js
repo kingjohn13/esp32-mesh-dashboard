@@ -18,28 +18,34 @@ const state = {
 
 let sampleCounter = 0;
 
-// ==== Helpers ====
-function clampTo60(v) {
-  return Math.max(0, Math.min(60, v ?? 0));
-}
-function clampTo100(v) {
-  return Math.max(0, Math.min(100, v ?? 0));
+// Clamp helpers
+function clampTo60(value) {
+  if (value == null || isNaN(value)) return 0;
+  if (value < 0) return 0;
+  if (value > 60) return 60;
+  return value;
 }
 
-// ==== Chart Options ====
-const baseOptions = {
-  responsive: true,
+function clampTo100(value) {
+  if (value == null || isNaN(value)) return 0;
+  if (value < 0) return 0;
+  if (value > 100) return 100;
+  return value;
+}
+
+// Chart options (axes fixed, no animation)
+const options0to60 = {
+  responsive: false,               // lock chart size [web:227][web:229]
   maintainAspectRatio: false,
-  animation: false,
+  animation: false,                // no movement during updates [web:286]
   layout: {
-    padding: { left: 8, right: 8, top: 6, bottom: 6 }
+    padding: 0
   },
   plugins: { legend: { display: false } },
   scales: {
     x: {
-      offset: true,
+      offset: false,
       ticks: {
-        padding: 4,
         color: "rgba(197,198,199,0.6)",
         maxRotation: 0,
         autoSkip: true,
@@ -52,10 +58,12 @@ const baseOptions = {
       }
     },
     y: {
+      min: 0,
+      max: 60,
       ticks: {
-        padding: 4,
         color: "rgba(197,198,199,0.7)",
-        font: { size: 8 }
+        font: { size: 8 },
+        stepSize: 10
       },
       grid: {
         color: "rgba(255,255,255,0.04)",
@@ -65,35 +73,48 @@ const baseOptions = {
   }
 };
 
-const options0to60 = {
-  ...baseOptions,
-  scales: {
-    ...baseOptions.scales,
-    y: {
-      ...baseOptions.scales.y,
-      min: 0,
-      max: 60,
-      ticks: { ...baseOptions.scales.y.ticks, stepSize: 10 }
-    }
-  }
-};
-
 const options0to100 = {
-  ...baseOptions,
+  responsive: false,
+  maintainAspectRatio: false,
+  animation: false,
+  layout: {
+    padding: 0
+  },
+  plugins: { legend: { display: false } },
   scales: {
-    ...baseOptions.scales,
+    x: {
+      offset: false,
+      ticks: {
+        color: "rgba(197,198,199,0.6)",
+        maxRotation: 0,
+        autoSkip: true,
+        maxTicksLimit: 4,
+        font: { size: 8 }
+      },
+      grid: {
+        color: "rgba(255,255,255,0.04)",
+        drawBorder: false
+      }
+    },
     y: {
-      ...baseOptions.scales.y,
       min: 0,
       max: 100,
-      ticks: { ...baseOptions.scales.y.ticks, stepSize: 20 }
+      ticks: {
+        color: "rgba(197,198,199,0.7)",
+        font: { size: 8 },
+        stepSize: 20
+      },
+      grid: {
+        color: "rgba(255,255,255,0.04)",
+        drawBorder: false
+      }
     }
   }
 };
 
-// ==== START AFTER DOM ====
+// Run only after DOM is ready
 window.addEventListener("DOMContentLoaded", () => {
-  // DOM refs
+  // ==== DOM ====
   const tempSpan = document.getElementById("temp-value");
   const humSpan = document.getElementById("hum-value");
   const distSpan = document.getElementById("dist-value");
@@ -105,151 +126,276 @@ window.addEventListener("DOMContentLoaded", () => {
   const lastUpdateSpan = document.getElementById("last-update");
   const eventLog = document.getElementById("event-log");
 
-  // ==== Charts ====
-  const createChart = (ctx, label, color, bg, options) =>
-    new Chart(ctx, {
+  // ==== Charts: 3 separate canvases ====
+  const tempChart = new Chart(
+    document.getElementById("temp-chart").getContext("2d"),
+    {
       type: "line",
       data: {
         labels: [],
         datasets: [{
-          label,
+          label: "Temp °C",
           data: [],
-          borderColor: color,
-          backgroundColor: bg,
+          borderColor: "#ff6b6b",
+          backgroundColor: "rgba(255,107,107,0.2)",
           borderWidth: 2,
           tension: 0.4,
           pointRadius: 0,
-          fill: true,
-          clip: false
+          fill: true
         }]
       },
-      options
-    });
-
-  const tempChart = createChart(
-    document.getElementById("temp-chart"),
-    "Temp",
-    "#ff6b6b",
-    "rgba(255,107,107,0.2)",
-    options0to60
+      options: options0to60
+    }
   );
 
-  const humChart = createChart(
-    document.getElementById("hum-chart"),
-    "Humidity",
-    "#1e90ff",
-    "rgba(30,144,255,0.2)",
-    options0to100
+  const humChart = new Chart(
+    document.getElementById("hum-chart").getContext("2d"),
+    {
+      type: "line",
+      data: {
+        labels: [],
+        datasets: [{
+          label: "Humidity %",
+          data: [],
+          borderColor: "#1e90ff",
+          backgroundColor: "rgba(30,144,255,0.2)",
+          borderWidth: 2,
+          tension: 0.4,
+          pointRadius: 0,
+          fill: true
+        }]
+      },
+      options: options0to100
+    }
   );
 
-  const distChart = createChart(
-    document.getElementById("dist-chart"),
-    "Distance",
-    "#f2c94c",
-    "rgba(242,201,76,0.2)",
-    options0to60
+  const distChart = new Chart(
+    document.getElementById("dist-chart").getContext("2d"),
+    {
+      type: "line",
+      data: {
+        labels: [],
+        datasets: [{
+          label: "Distance cm",
+          data: [],
+          borderColor: "#f2c94c",
+          backgroundColor: "rgba(242,201,76,0.2)",
+          borderWidth: 2,
+          tension: 0.4,
+          pointRadius: 0,
+          fill: true
+        }]
+      },
+      options: options0to60
+    }
   );
 
   function pushToCharts(temp, hum, dist) {
-    const t = new Date().toLocaleTimeString();
-    const MAX = 10;
+    const now = new Date();
+    const t = now.toLocaleTimeString("en-US", {
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    });
+    const MAX_POINTS = 10;
 
-    const update = (chart, value) => {
-      if (value == null) return;
-      chart.data.labels.push(t);
-      chart.data.datasets[0].data.push(value);
-      while (chart.data.labels.length > MAX) {
-        chart.data.labels.shift();
-        chart.data.datasets[0].data.shift();
+    const cTemp = temp != null ? clampTo60(temp)   : null;
+    const cHum  = hum  != null ? clampTo100(hum)  : null;
+    const cDist = dist != null ? clampTo60(dist)  : null;
+
+    // Temp
+    if (cTemp != null) {
+      tempChart.data.labels.push(t);
+      tempChart.data.datasets[0].data.push(cTemp);
+      while (tempChart.data.labels.length > MAX_POINTS) {
+        tempChart.data.labels.shift();
+        tempChart.data.datasets[0].data.shift();
       }
-      chart.update('none');
-    };
+      tempChart.update('none');   // no animation
+    }
 
-    update(tempChart, clampTo60(temp));
-    update(humChart, clampTo100(hum));
-    update(distChart, clampTo60(dist));
+    // Humidity
+    if (cHum != null) {
+      humChart.data.labels.push(t);
+      humChart.data.datasets[0].data.push(cHum);
+      while (humChart.data.labels.length > MAX_POINTS) {
+        humChart.data.labels.shift();
+        humChart.data.datasets[0].data.shift();
+      }
+      humChart.update('none');
+    }
+
+    // Distance
+    if (cDist != null) {
+      distChart.data.labels.push(t);
+      distChart.data.datasets[0].data.push(cDist);
+      while (distChart.data.labels.length > MAX_POINTS) {
+        distChart.data.labels.shift();
+        distChart.data.datasets[0].data.shift();
+      }
+      distChart.update('none');
+    }
   }
 
+  // ==== Event log ====
+  function addEventLogEntry(payload) {
+    if (!eventLog) return;
+    const li = document.createElement("li");
+
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString("en-US", { hour12: false });
+
+    const timeSpan = document.createElement("span");
+    timeSpan.className = "event-log-time";
+    timeSpan.textContent = timeStr;
+
+    const text = document.createTextNode(
+      `ID=${payload.nodeId ?? "-"} ROLE=${payload.role ?? "-"} ` +
+        `T=${payload.temp?.toFixed?.(1) ?? "-"} ` +
+        `H=${payload.hum?.toFixed?.(1) ?? "-"} ` +
+        `D=${payload.dist?.toFixed?.(1) ?? "-"}`
+    );
+
+    li.appendChild(timeSpan);
+    li.appendChild(text);
+
+    eventLog.insertBefore(li, eventLog.firstChild);
+
+    while (eventLog.children.length > 40) {
+      eventLog.removeChild(eventLog.lastChild);
+    }
+  }
+
+  // ==== UI update ====
   function updateUI() {
-    if (state.temp != null) tempSpan.textContent = state.temp.toFixed(1);
-    if (state.hum != null) humSpan.textContent = state.hum.toFixed(1);
-    if (state.dist != null) distSpan.textContent = state.dist.toFixed(1);
+    if (state.temp != null) tempSpan.textContent = clampTo60(state.temp).toFixed(1);
+    if (state.hum != null) humSpan.textContent = clampTo100(state.hum).toFixed(1);
+    if (state.dist != null) distSpan.textContent = clampTo60(state.dist).toFixed(1);
 
     nodeIdSpan.textContent = state.nodeId ?? "-";
     roleSpan.textContent = state.role ?? "-";
-    nodeCountSpan.textContent = state.nodes;
-    neighborsSpan.textContent = state.neighbors.join(", ") || "-";
+    nodeCountSpan.textContent = state.nodes ?? 0;
 
-    lastUpdateSpan.textContent =
-      "Last update: " + new Date().toLocaleTimeString();
+    neighborsSpan.textContent =
+      state.neighbors && state.neighbors.length
+        ? state.neighbors.join(", ")
+        : "-";
+
+    const now = new Date();
+    lastUpdateSpan.textContent = "Last update: " + now.toLocaleTimeString();
 
     pushToCharts(state.temp, state.hum, state.dist);
   }
 
+  // ==== Connection badge ====
   function setConnected(flag) {
-    connStatus.textContent = flag ? "Connected" : "Disconnected";
-    connStatus.className =
-      "badge " + (flag ? "badge-connected" : "badge-disconnected");
+    if (!connStatus) return;
+    if (flag) {
+      connStatus.textContent = "Connected";
+      connStatus.classList.remove("badge-disconnected");
+      connStatus.classList.add("badge-connected");
+    } else {
+      connStatus.textContent = "Disconnected";
+      connStatus.classList.remove("badge-connected");
+      connStatus.classList.add("badge-disconnected");
+    }
   }
 
-  window.updateFromPayload = (p) => {
+  // ==== Update from parsed payload with light throttling ====
+  window.updateFromPayload = function (payload) {
     sampleCounter++;
 
-    state.nodeId = p.nodeId ?? state.nodeId;
-    state.role = p.role ?? state.role;
-    state.nodes = p.nodes ?? state.nodes;
-    state.neighbors = p.neighbors ?? state.neighbors;
+    state.nodeId = payload.nodeId ?? state.nodeId;
+    state.role = payload.role ?? state.role;
+    state.nodes = payload.nodes ?? state.nodes;
+    state.neighbors = payload.neighbors ?? state.neighbors;
 
-    if (typeof p.temp === "number") state.temp = clampTo60(p.temp);
-    if (typeof p.hum === "number") state.hum = clampTo100(p.hum);
-    if (typeof p.dist === "number") state.dist = clampTo60(p.dist);
+    if (typeof payload.temp === "number") state.temp = clampTo60(payload.temp);
+    if (typeof payload.hum === "number") state.hum = clampTo100(payload.hum);
+    if (typeof payload.dist === "number") state.dist = clampTo60(payload.dist);
 
     setConnected(true);
 
-    if (sampleCounter % 2 === 0) updateUI();
+    // Only animate chart + log every 2nd message
+    if (sampleCounter % 2 === 0) {
+      updateUI();
+      addEventLogEntry(payload);
+    } else {
+      // Still keep numbers fresh
+      if (state.temp != null) tempSpan.textContent = state.temp.toFixed(1);
+      if (state.hum != null) humSpan.textContent = state.hum.toFixed(1);
+      if (state.dist != null) distSpan.textContent = state.dist.toFixed(1);
+    }
   };
 
-  // ==== MQTT ====
-  const client = mqtt.connect(MQTT_WS_URL, {
-    clientId: "web_" + Math.random().toString(16).slice(2),
-    username: MQTT_USERNAME,
-    password: MQTT_PASSWORD,
-    reconnectPeriod: 3000
-  });
-
-  client.on("connect", () => {
-    console.log("✅ Connected");
-    setConnected(true);
-    client.subscribe(MQTT_TOPIC);
-  });
-
-  client.on("error", (e) => console.error("❌ MQTT Error:", e));
-  client.on("close", () => setConnected(false));
-
-  client.on("message", (_, msg) => {
-    const s = msg.toString().trim();
-    console.log("📩", s);
-
-    const parts = s.split(",");
-    const payload = {
-      nodeId: parts[0],
-      role: parts[1],
-      nodes: Number(parts[2]) || 0,
-      neighbors: [],
-      temp: null,
-      hum: null,
-      dist: null
+  // ==== MQTT: connect to HiveMQ Cloud ====
+  (function setupMqtt() {
+    const options = {
+      clientId: 'web_' + Math.random().toString(16).slice(2),
+      clean: true,
+      connectTimeout: 5000,
+      reconnectPeriod: 3000,
+      username: MQTT_USERNAME,
+      password: MQTT_PASSWORD
     };
 
-    parts.forEach(p => {
-      if (p.startsWith("TEMP=")) payload.temp = Number(p.slice(5));
-      else if (p.startsWith("HUM=")) payload.hum = Number(p.slice(4));
-      else if (p.startsWith("DIST=")) payload.dist = Number(p.slice(5));
-      else if (!isNaN(p) && p !== payload.nodeId) {
-        payload.neighbors.push(p);
-      }
+    const client = mqtt.connect(MQTT_WS_URL, options);
+
+    client.on('connect', () => {
+      console.log('Connected to HiveMQ via WebSockets');
+      setConnected(true);
+      client.subscribe(MQTT_TOPIC, (err) => {
+        if (err) console.error('Subscribe error:', err);
+        else console.log('Subscribed to', MQTT_TOPIC);
+      });
     });
 
-    window.updateFromPayload(payload);
-  });
+    client.on('reconnect', () => {
+      console.log('Reconnecting...');
+    });
+
+    client.on('close', () => {
+      console.log('Connection closed');
+      setConnected(false);
+    });
+
+    client.on('error', (err) => {
+      console.error('MQTT error:', err);
+      setConnected(false);
+    });
+
+    client.on('message', (topic, message) => {
+      const s = message.toString();
+      // example: 258509481,ROOT,1,3637930473,TEMP=25.2,HUM=68.0,DIST=101.0
+      const parts = s.split(',');
+
+      const payload = {
+        nodeId: null,
+        role: null,
+        nodes: 0,
+        neighbors: [],
+        temp: null,
+        hum: null,
+        dist: null
+      };
+
+      if (parts.length >= 3) {
+        payload.nodeId = parts[0];
+        payload.role = parts[1];
+        payload.nodes = Number(parts[2]) || 0;
+      }
+
+      parts.forEach(p => {
+        if (p.startsWith('TEMP=')) payload.temp = Number(p.slice(5));
+        else if (p.startsWith('HUM=')) payload.hum = Number(p.slice(4));
+        else if (p.startsWith('DIST=')) payload.dist = Number(p.slice(5));
+        else if (!isNaN(Number(p)) && p !== payload.nodeId) {
+          payload.neighbors.push(p);
+        }
+      });
+
+      window.updateFromPayload(payload);
+    });
+  })();
 });
