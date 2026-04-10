@@ -147,7 +147,7 @@ main.layout {
   grid-template-columns: 2fr 1.4fr;
   gap: 0.6rem;
   flex: 1;
-  min-height: 0; /* allow children to scroll */
+  min-height: 0; /* allow children to control height */
 }
 
 .panel {
@@ -168,20 +168,24 @@ main.layout {
   color: var(--accent-soft);
 }
 
-/* Make sure chart panel behaves nicely */
+/* Chart panel: fixed size, charts inside fixed area */
+
 .panel.panel-chart {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  height: 260px;     /* fixed height for the entire charts panel */
 }
 
-/* Charts: 3 stacked vertically (Temp, Humidity, Distance) */
+/* Charts: 3 stacked vertically inside fixed panel */
 
 .charts-grid {
   display: grid;
-  grid-template-columns: 1fr;   /* one column -> vertical stack */
-  gap: 0.6rem;
-  height: auto;
+  grid-template-columns: 1fr;          /* single column */
+  grid-template-rows: repeat(3, 1fr);  /* 3 equal rows */
+  gap: 0.4rem;
+  flex: 1;
+  min-height: 0;
 }
 
 .chart-item {
@@ -195,12 +199,13 @@ main.layout {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: rgba(197, 198, 199, 0.8);
-  margin-bottom: 0.15rem;
+  margin-bottom: 0.1rem;
 }
 
+/* Fixed chart height and width (full width of panel) */
 .chart-item canvas {
   width: 100% !important;
-  flex: 1;
+  height: 60px !important;   /* fixed per-chart height */
 }
 
 /* Info + log */
