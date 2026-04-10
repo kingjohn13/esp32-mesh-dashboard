@@ -103,6 +103,19 @@ main.layout {
   flex-direction: column;
 }
 
+/* Different colors per tile value */
+.tile:nth-child(1) .tile-value {  /* Temp */
+  color: #ff6b6b;
+}
+
+.tile:nth-child(2) .tile-value {  /* Humidity */
+  color: #1e90ff;
+}
+
+.tile:nth-child(3) .tile-value {  /* Distance */
+  color: #f2c94c;
+}
+
 .tile-label {
   font-size: 0.75rem;
   text-transform: uppercase;
@@ -120,7 +133,6 @@ main.layout {
 .tile-value {
   font-size: 1.8rem;
   font-weight: 600;
-  color: var(--accent);
 }
 
 .tile-unit {
