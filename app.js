@@ -39,7 +39,7 @@ window.addEventListener("DOMContentLoaded", () => {
   }
   const ctx = canvas.getContext("2d");
 
-  // ==== Chart (combined, smoother) ====
+  // ==== Chart (combined, smoother, 10 points) ====
   const combinedChart = new Chart(ctx, {
     type: "line",
     data: {
@@ -53,7 +53,7 @@ window.addEventListener("DOMContentLoaded", () => {
           borderWidth: 2,
           tension: 0.4,
           pointRadius: 0,
-          yAxisID: "y1"
+          yAxisID: "yLeft"
         },
         {
           label: "Humidity %",
@@ -63,17 +63,17 @@ window.addEventListener("DOMContentLoaded", () => {
           borderWidth: 2,
           tension: 0.4,
           pointRadius: 0,
-          yAxisID: "y2"
+          yAxisID: "yLeft"
         },
         {
           label: "Distance cm",
           data: [],
           borderColor: "#f2c94c",       // yellow
-          backgroundColor: "#f2c94c22",
-          borderWidth: 2,
+          backgroundColor: "#f2c94c11",
+          borderWidth: 1.5,
           tension: 0.4,
           pointRadius: 0,
-          yAxisID: "y3"
+          yAxisID: "yRight"
         }
       ]
     },
@@ -81,7 +81,7 @@ window.addEventListener("DOMContentLoaded", () => {
       responsive: true,
       maintainAspectRatio: false,
       animation: {
-        duration: 400,
+        duration: 350,
         easing: "easeOutQuad"
       },
       plugins: {
@@ -100,24 +100,17 @@ window.addEventListener("DOMContentLoaded", () => {
           },
           grid: { color: "rgba(255,255,255,0.05)" }
         },
-        y1: {
+        yLeft: {
           type: "linear",
           position: "left",
-          ticks: { color: "#ff6b6b", font: { size: 9 } },
+          ticks: { color: "#ffffff", font: { size: 9 } },
           grid: { color: "rgba(255,255,255,0.05)" }
         },
-        y2: {
-          type: "linear",
-          position: "right",
-          ticks: { color: "#1e90ff", font: { size: 9 } },
-          grid: { display: false }
-        },
-        y3: {
+        yRight: {
           type: "linear",
           position: "right",
           ticks: { color: "#f2c94c", font: { size: 9 } },
-          grid: { display: false },
-          offset: true
+          grid: { display: false }
         }
       }
     }
@@ -142,8 +135,9 @@ window.addEventListener("DOMContentLoaded", () => {
     d2.push(hum != null ? hum : null);
     d3.push(dist != null ? dist : null);
 
-    // keep last ~40 points
-    if (labels.length > 40) {
+    // keep only last 10 points
+    const MAX_POINTS = 10;
+    while (labels.length > MAX_POINTS) {
       labels.shift();
       d1.shift();
       d2.shift();
