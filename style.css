@@ -170,15 +170,16 @@ main.layout {
 
 /* Left column: three separate chart boxes */
 
-.charts-column {
+
   
+.charts-column {
   display: grid;
   grid-template-rows: repeat(3, 1fr);
-  row-gap: 1.2rem;  /* more vertical space between chart panels */
-  column-gap: 0;    /* optional: explicit, or leave out */
+  gap: 1.2rem;
   min-height: 0;
-
 }
+
+
 
 .panel.panel-chart-single {
   display: flex;
