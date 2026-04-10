@@ -174,7 +174,7 @@ main.layout {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  height: 340px;     /* fixed height for the entire charts panel */
+  height: 720px;     /* fixed height for the entire charts panel */
 }
 
 /* Charts: 3 stacked vertically inside fixed panel */
@@ -205,7 +205,7 @@ main.layout {
 /* Fixed chart height and width (full width of panel) */
 .chart-item canvas {
   width: 100% !important;
-  height: 80px !important;   /* fixed per-chart height */
+  height: 240px !important;   /* fixed per-chart height */
 }
 
 /* Info + log */
