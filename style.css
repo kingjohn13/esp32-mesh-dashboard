@@ -168,13 +168,20 @@ main.layout {
   color: var(--accent-soft);
 }
 
-/* Charts: 3 slim “scope” panels */
+/* Make sure chart panel doesn't stretch too tall */
+.panel.panel-chart {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Charts: 3 slim “scope” panels in one horizontal strip */
 
 .charts-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.4rem;
-  height: 100%;
+  gap: 0.6rem;
+  height: 140px;              /* slim horizontal row of charts */
 }
 
 .chart-item {
@@ -238,7 +245,7 @@ main.layout {
   margin-right: 0.35rem;
 }
 
-/* Small screen: stack columns */
+/* Small screen: stack columns and charts vertically */
 
 @media (max-width: 768px) {
   main.layout {
@@ -254,8 +261,10 @@ main.layout {
     min-height: auto;
   }
 
+  /* On mobile, charts stack vertically */
   .charts-grid {
     grid-template-columns: 1fr;
+    height: auto;
   }
 }
 
