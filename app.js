@@ -1,8 +1,8 @@
 // ==== CONFIG: HIVEMQ CLOUD ====
 const MQTT_WS_URL =
   'wss://63a94dada2fa46b797e4d6fdf720f43f.s1.eu.hivemq.cloud:8884/mqtt';
-const MQTT_USERNAME = 'JuneJuly';     // your user
-const MQTT_PASSWORD = 'JuneJuly1';    // your password
+const MQTT_USERNAME = 'JuneJuly';
+const MQTT_PASSWORD = 'JuneJuly1';
 const MQTT_TOPIC = 'esp32/mesh/debug';
 
 // ==== State ====
@@ -18,6 +18,50 @@ const state = {
 
 let sampleCounter = 0;
 
+// Clamp any value to [0, 60]
+function clampTo60(value) {
+  if (value == null || isNaN(value)) return 0;
+  if (value < 0) return 0;
+  if (value > 60) return 60;
+  return value;
+}
+
+// Shared chart options with same y-axis 0–60
+const commonChartOptions = {
+  responsive: true,
+  maintainAspectRatio: false, // respect CSS height [web:229][web:246]
+  animation: { duration: 250, easing: "easeOutQuad" },
+  plugins: { legend: { display: false } },
+  scales: {
+    x: {
+      ticks: {
+        color: "rgba(197,198,199,0.6)",
+        maxRotation: 0,
+        autoSkip: true,
+        maxTicksLimit: 4,
+        font: { size: 8 }
+      },
+      grid: {
+        color: "rgba(255,255,255,0.04)",
+        drawBorder: false
+      }
+    },
+    y: {
+      min: 0,
+      max: 60,
+      ticks: {
+        color: "rgba(197,198,199,0.7)",
+        font: { size: 8 },
+        stepSize: 10
+      },
+      grid: {
+        color: "rgba(255,255,255,0.04)",
+        drawBorder: false
+      }
+    }
+  }
+};
+
 // Run only after DOM is ready
 window.addEventListener("DOMContentLoaded", () => {
   // ==== DOM ====
@@ -32,52 +76,25 @@ window.addEventListener("DOMContentLoaded", () => {
   const lastUpdateSpan = document.getElementById("last-update");
   const eventLog = document.getElementById("event-log");
 
-  // ==== Charts: three separate slim line charts ====
+  // ==== Charts: three line charts ====
   const tempChart = new Chart(
     document.getElementById("temp-chart").getContext("2d"),
     {
       type: "line",
-      data: { labels: [], datasets: [{
-        label: "Temp °C",
-        data: [],
-        borderColor: "#ff6b6b",
-        backgroundColor: "rgba(255,107,107,0.2)",
-        borderWidth: 2,
-        tension: 0.4,
-        pointRadius: 0,
-        fill: true
-      }]},
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 250, easing: "easeOutQuad" },
-        plugins: { legend: { display: false } },
-        scales: {
-          x: {
-            ticks: {
-              color: "rgba(197,198,199,0.6)",
-              maxRotation: 0,
-              autoSkip: true,
-              maxTicksLimit: 4,
-              font: { size: 8 }
-            },
-            grid: {
-              color: "rgba(255,255,255,0.04)",
-              drawBorder: false
-            }
-          },
-          y: {
-            ticks: {
-              color: "rgba(197,198,199,0.7)",
-              font: { size: 8 }
-            },
-            grid: {
-              color: "rgba(255,255,255,0.04)",
-              drawBorder: false
-            }
-          }
-        }
-      }
+      data: {
+        labels: [],
+        datasets: [{
+          label: "Temp °C",
+          data: [],
+          borderColor: "#ff6b6b",
+          backgroundColor: "rgba(255,107,107,0.2)",
+          borderWidth: 2,
+          tension: 0.4,
+          pointRadius: 0,
+          fill: true
+        }]
+      },
+      options: commonChartOptions
     }
   );
 
@@ -85,47 +102,20 @@ window.addEventListener("DOMContentLoaded", () => {
     document.getElementById("hum-chart").getContext("2d"),
     {
       type: "line",
-      data: { labels: [], datasets: [{
-        label: "Humidity %",
-        data: [],
-        borderColor: "#1e90ff",
-        backgroundColor: "rgba(30,144,255,0.2)",
-        borderWidth: 2,
-        tension: 0.4,
-        pointRadius: 0,
-        fill: true
-      }]},
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 250, easing: "easeOutQuad" },
-        plugins: { legend: { display: false } },
-        scales: {
-          x: {
-            ticks: {
-              color: "rgba(197,198,199,0.6)",
-              maxRotation: 0,
-              autoSkip: true,
-              maxTicksLimit: 4,
-              font: { size: 8 }
-            },
-            grid: {
-              color: "rgba(255,255,255,0.04)",
-              drawBorder: false
-            }
-          },
-          y: {
-            ticks: {
-              color: "rgba(197,198,199,0.7)",
-              font: { size: 8 }
-            },
-            grid: {
-              color: "rgba(255,255,255,0.04)",
-              drawBorder: false
-            }
-          }
-        }
-      }
+      data: {
+        labels: [],
+        datasets: [{
+          label: "Humidity %",
+          data: [],
+          borderColor: "#1e90ff",
+          backgroundColor: "rgba(30,144,255,0.2)",
+          borderWidth: 2,
+          tension: 0.4,
+          pointRadius: 0,
+          fill: true
+        }]
+      },
+      options: commonChartOptions
     }
   );
 
@@ -133,47 +123,20 @@ window.addEventListener("DOMContentLoaded", () => {
     document.getElementById("dist-chart").getContext("2d"),
     {
       type: "line",
-      data: { labels: [], datasets: [{
-        label: "Distance cm",
-        data: [],
-        borderColor: "#f2c94c",
-        backgroundColor: "rgba(242,201,76,0.2)",
-        borderWidth: 2,
-        tension: 0.4,
-        pointRadius: 0,
-        fill: true
-      }]},
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 250, easing: "easeOutQuad" },
-        plugins: { legend: { display: false } },
-        scales: {
-          x: {
-            ticks: {
-              color: "rgba(197,198,199,0.6)",
-              maxRotation: 0,
-              autoSkip: true,
-              maxTicksLimit: 4,
-              font: { size: 8 }
-            },
-            grid: {
-              color: "rgba(255,255,255,0.04)",
-              drawBorder: false
-            }
-          },
-          y: {
-            ticks: {
-              color: "rgba(197,198,199,0.7)",
-              font: { size: 8 }
-            },
-            grid: {
-              color: "rgba(255,255,255,0.04)",
-              drawBorder: false
-            }
-          }
-        }
-      }
+      data: {
+        labels: [],
+        datasets: [{
+          label: "Distance cm",
+          data: [],
+          borderColor: "#f2c94c",
+          backgroundColor: "rgba(242,201,76,0.2)",
+          borderWidth: 2,
+          tension: 0.4,
+          pointRadius: 0,
+          fill: true
+        }]
+      },
+      options: commonChartOptions
     }
   );
 
@@ -187,10 +150,14 @@ window.addEventListener("DOMContentLoaded", () => {
     });
     const MAX_POINTS = 10;
 
+    const cTemp = temp != null ? clampTo60(temp) : null;
+    const cHum  = hum  != null ? clampTo60(hum)  : null;
+    const cDist = dist != null ? clampTo60(dist) : null;
+
     // Temp
-    if (temp != null) {
+    if (cTemp != null) {
       tempChart.data.labels.push(t);
-      tempChart.data.datasets[0].data.push(temp);
+      tempChart.data.datasets[0].data.push(cTemp);
       while (tempChart.data.labels.length > MAX_POINTS) {
         tempChart.data.labels.shift();
         tempChart.data.datasets[0].data.shift();
@@ -199,9 +166,9 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 
     // Humidity
-    if (hum != null) {
+    if (cHum != null) {
       humChart.data.labels.push(t);
-      humChart.data.datasets[0].data.push(hum);
+      humChart.data.datasets[0].data.push(cHum);
       while (humChart.data.labels.length > MAX_POINTS) {
         humChart.data.labels.shift();
         humChart.data.datasets[0].data.shift();
@@ -210,9 +177,9 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 
     // Distance
-    if (dist != null) {
+    if (cDist != null) {
       distChart.data.labels.push(t);
-      distChart.data.datasets[0].data.push(dist);
+      distChart.data.datasets[0].data.push(cDist);
       while (distChart.data.labels.length > MAX_POINTS) {
         distChart.data.labels.shift();
         distChart.data.datasets[0].data.shift();
@@ -252,9 +219,9 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // ==== UI update ====
   function updateUI() {
-    if (state.temp != null) tempSpan.textContent = state.temp.toFixed(1);
-    if (state.hum != null) humSpan.textContent = state.hum.toFixed(1);
-    if (state.dist != null) distSpan.textContent = state.dist.toFixed(1);
+    if (state.temp != null) tempSpan.textContent = clampTo60(state.temp).toFixed(1);
+    if (state.hum != null) humSpan.textContent = clampTo60(state.hum).toFixed(1);
+    if (state.dist != null) distSpan.textContent = clampTo60(state.dist).toFixed(1);
 
     nodeIdSpan.textContent = state.nodeId ?? "-";
     roleSpan.textContent = state.role ?? "-";
@@ -293,9 +260,10 @@ window.addEventListener("DOMContentLoaded", () => {
     state.role = payload.role ?? state.role;
     state.nodes = payload.nodes ?? state.nodes;
     state.neighbors = payload.neighbors ?? state.neighbors;
-    if (typeof payload.temp === "number") state.temp = payload.temp;
-    if (typeof payload.hum === "number") state.hum = payload.hum;
-    if (typeof payload.dist === "number") state.dist = payload.dist;
+
+    if (typeof payload.temp === "number") state.temp = clampTo60(payload.temp);
+    if (typeof payload.hum === "number") state.hum = clampTo60(payload.hum);
+    if (typeof payload.dist === "number") state.dist = clampTo60(payload.dist);
 
     setConnected(true);
 
