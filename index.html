@@ -47,27 +47,33 @@
       </div>
     </section>
 
-    <!-- Bottom row: charts + info + log -->
+    <!-- Bottom row: 3 separate chart panels + mesh info/log -->
     <section class="bottom">
-      <div class="panel panel-chart">
-        <h2>Live Signals</h2>
-
-        <div class="charts-grid">
-          <div class="chart-item">
-            <div class="chart-title">Temp °C</div>
+      <!-- Left: three independent chart boxes -->
+      <div class="charts-column">
+        <div class="panel panel-chart-single">
+          <h2>Temperature</h2>
+          <div class="chart-wrapper">
             <canvas id="temp-chart"></canvas>
           </div>
-          <div class="chart-item">
-            <div class="chart-title">Humidity %</div>
+        </div>
+
+        <div class="panel panel-chart-single">
+          <h2>Humidity</h2>
+          <div class="chart-wrapper">
             <canvas id="hum-chart"></canvas>
           </div>
-          <div class="chart-item">
-            <div class="chart-title">Distance cm</div>
+        </div>
+
+        <div class="panel panel-chart-single">
+          <h2>Distance</h2>
+          <div class="chart-wrapper">
             <canvas id="dist-chart"></canvas>
           </div>
         </div>
       </div>
 
+      <!-- Right: mesh info + event log -->
       <div class="panel panel-info">
         <h2>Mesh Info</h2>
         <div class="mesh-info">
