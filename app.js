@@ -32,143 +32,152 @@ window.addEventListener("DOMContentLoaded", () => {
   const lastUpdateSpan = document.getElementById("last-update");
   const eventLog = document.getElementById("event-log");
 
-  const canvas = document.getElementById("combined-chart");
-  if (!canvas) {
-    console.error("combined-chart canvas not found");
-    return;
-  }
-  const ctx = canvas.getContext("2d");
-
-  // ==== Chart (Temp, Humidity, Distance scope style, last 10 points) ====
-  const combinedChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: [],
-      datasets: [
-        {
-          label: "Temp °C",
-          data: [],
-          borderColor: "#ff6b6b",
-          backgroundColor: "rgba(255,107,107,0.25)",
-          borderWidth: 2,
-          tension: 0.4,
-          pointRadius: 0,
-          fill: true,
-          yAxisID: "yLeft"
-        },
-        {
-          label: "Humidity %",
-          data: [],
-          borderColor: "#1e90ff",
-          backgroundColor: "rgba(30,144,255,0.25)",
-          borderWidth: 2,
-          tension: 0.4,
-          pointRadius: 0,
-          fill: true,
-          yAxisID: "yLeft"
-        },
-        {
-          label: "Distance cm",
-          data: [],
-          borderColor: "#f2c94c",
-          backgroundColor: "rgba(242,201,76,0.18)",
-          borderWidth: 1.8,
-          tension: 0.4,
-          pointRadius: 0,
-          fill: true,
-          yAxisID: "yRight"
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: {
-        duration: 300,
-        easing: "easeOutQuad"
-      },
-      plugins: {
-        legend: {
-          position: "top",
-          labels: {
-            color: "#c5c6c7",
-            boxWidth: 8,
-            font: { size: 10 }
-          }
-        },
-        tooltip: {
-          enabled: true,
-          backgroundColor: "rgba(15,20,30,0.9)",
-          borderColor: "rgba(255,255,255,0.15)",
-          borderWidth: 1,
-          titleColor: "#ffffff",
-          bodyColor: "#c5c6c7",
-          displayColors: true
-        }
-      },
-      scales: {
-        x: {
-          ticks: {
-            color: "rgba(197,198,199,0.7)",
-            maxRotation: 0,
-            autoSkip: true,
-            maxTicksLimit: 6,
-            font: { size: 9 }
+  // ==== Charts: three separate slim line charts ====
+  const tempChart = new Chart(
+    document.getElementById("temp-chart").getContext("2d"),
+    {
+      type: "line",
+      data: { labels: [], datasets: [{
+        label: "Temp °C",
+        data: [],
+        borderColor: "#ff6b6b",
+        backgroundColor: "rgba(255,107,107,0.2)",
+        borderWidth: 2,
+        tension: 0.4,
+        pointRadius: 0,
+        fill: true
+      }]},
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 250, easing: "easeOutQuad" },
+        plugins: { legend: { display: false } },
+        scales: {
+          x: {
+            ticks: {
+              color: "rgba(197,198,199,0.6)",
+              maxRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: 4,
+              font: { size: 8 }
+            },
+            grid: {
+              color: "rgba(255,255,255,0.04)",
+              drawBorder: false
+            }
           },
-          grid: {
-            color: "rgba(255,255,255,0.04)",
-            drawBorder: false
+          y: {
+            ticks: {
+              color: "rgba(197,198,199,0.7)",
+              font: { size: 8 }
+            },
+            grid: {
+              color: "rgba(255,255,255,0.04)",
+              drawBorder: false
+            }
           }
-        },
-        yLeft: {
-          type: "linear",
-          position: "left",
-          ticks: {
-            color: "rgba(197,198,199,0.8)",
-            font: { size: 9 }
-          },
-          grid: {
-            color: "rgba(255,255,255,0.04)",
-            drawBorder: false
-          }
-        },
-        yRight: {
-          type: "linear",
-          position: "right",
-          ticks: {
-            color: "#f2c94c",
-            font: { size: 9 }
-          },
-          grid: { display: false }
         }
       }
     }
-  });
+  );
 
-  // Optional: per-line gradient fills (nicer)
-  const h = canvas.height || 200;
-  const gradTemp = ctx.createLinearGradient(0, 0, 0, h);
-  gradTemp.addColorStop(0, "rgba(255,107,107,0.35)");
-  gradTemp.addColorStop(1, "rgba(255,107,107,0)");
+  const humChart = new Chart(
+    document.getElementById("hum-chart").getContext("2d"),
+    {
+      type: "line",
+      data: { labels: [], datasets: [{
+        label: "Humidity %",
+        data: [],
+        borderColor: "#1e90ff",
+        backgroundColor: "rgba(30,144,255,0.2)",
+        borderWidth: 2,
+        tension: 0.4,
+        pointRadius: 0,
+        fill: true
+      }]},
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 250, easing: "easeOutQuad" },
+        plugins: { legend: { display: false } },
+        scales: {
+          x: {
+            ticks: {
+              color: "rgba(197,198,199,0.6)",
+              maxRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: 4,
+              font: { size: 8 }
+            },
+            grid: {
+              color: "rgba(255,255,255,0.04)",
+              drawBorder: false
+            }
+          },
+          y: {
+            ticks: {
+              color: "rgba(197,198,199,0.7)",
+              font: { size: 8 }
+            },
+            grid: {
+              color: "rgba(255,255,255,0.04)",
+              drawBorder: false
+            }
+          }
+        }
+      }
+    }
+  );
 
-  const gradHum = ctx.createLinearGradient(0, 0, 0, h);
-  gradHum.addColorStop(0, "rgba(30,144,255,0.35)");
-  gradHum.addColorStop(1, "rgba(30,144,255,0)");
+  const distChart = new Chart(
+    document.getElementById("dist-chart").getContext("2d"),
+    {
+      type: "line",
+      data: { labels: [], datasets: [{
+        label: "Distance cm",
+        data: [],
+        borderColor: "#f2c94c",
+        backgroundColor: "rgba(242,201,76,0.2)",
+        borderWidth: 2,
+        tension: 0.4,
+        pointRadius: 0,
+        fill: true
+      }]},
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 250, easing: "easeOutQuad" },
+        plugins: { legend: { display: false } },
+        scales: {
+          x: {
+            ticks: {
+              color: "rgba(197,198,199,0.6)",
+              maxRotation: 0,
+              autoSkip: true,
+              maxTicksLimit: 4,
+              font: { size: 8 }
+            },
+            grid: {
+              color: "rgba(255,255,255,0.04)",
+              drawBorder: false
+            }
+          },
+          y: {
+            ticks: {
+              color: "rgba(197,198,199,0.7)",
+              font: { size: 8 }
+            },
+            grid: {
+              color: "rgba(255,255,255,0.04)",
+              drawBorder: false
+            }
+          }
+        }
+      }
+    }
+  );
 
-  const gradDist = ctx.createLinearGradient(0, 0, 0, h);
-  gradDist.addColorStop(0, "rgba(242,201,76,0.30)");
-  gradDist.addColorStop(1, "rgba(242,201,76,0)");
-
-  combinedChart.data.datasets[0].backgroundColor = gradTemp;
-  combinedChart.data.datasets[1].backgroundColor = gradHum;
-  combinedChart.data.datasets[2].backgroundColor = gradDist;
-
-  function pushToCombinedChart(temp, hum, dist) {
-    const labels = combinedChart.data.labels;
-    const dTemp = combinedChart.data.datasets[0].data;
-    const dHum = combinedChart.data.datasets[1].data;
-    const dDist = combinedChart.data.datasets[2].data;
-
+  function pushToCharts(temp, hum, dist) {
     const now = new Date();
     const t = now.toLocaleTimeString("en-US", {
       hour12: false,
@@ -176,21 +185,40 @@ window.addEventListener("DOMContentLoaded", () => {
       minute: "2-digit",
       second: "2-digit"
     });
-
-    labels.push(t);
-    dTemp.push(temp != null ? temp : null);
-    dHum.push(hum != null ? hum : null);
-    dDist.push(dist != null ? dist : null);
-
     const MAX_POINTS = 10;
-    while (labels.length > MAX_POINTS) {
-      labels.shift();
-      dTemp.shift();
-      dHum.shift();
-      dDist.shift();
+
+    // Temp
+    if (temp != null) {
+      tempChart.data.labels.push(t);
+      tempChart.data.datasets[0].data.push(temp);
+      while (tempChart.data.labels.length > MAX_POINTS) {
+        tempChart.data.labels.shift();
+        tempChart.data.datasets[0].data.shift();
+      }
+      tempChart.update();
     }
 
-    combinedChart.update();
+    // Humidity
+    if (hum != null) {
+      humChart.data.labels.push(t);
+      humChart.data.datasets[0].data.push(hum);
+      while (humChart.data.labels.length > MAX_POINTS) {
+        humChart.data.labels.shift();
+        humChart.data.datasets[0].data.shift();
+      }
+      humChart.update();
+    }
+
+    // Distance
+    if (dist != null) {
+      distChart.data.labels.push(t);
+      distChart.data.datasets[0].data.push(dist);
+      while (distChart.data.labels.length > MAX_POINTS) {
+        distChart.data.labels.shift();
+        distChart.data.datasets[0].data.shift();
+      }
+      distChart.update();
+    }
   }
 
   // ==== Event log ====
@@ -240,7 +268,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const now = new Date();
     lastUpdateSpan.textContent = "Last update: " + now.toLocaleTimeString();
 
-    pushToCombinedChart(state.temp, state.hum, state.dist);
+    pushToCharts(state.temp, state.hum, state.dist);
   }
 
   // ==== Connection badge ====
