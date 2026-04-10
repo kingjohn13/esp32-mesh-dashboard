@@ -29,7 +29,9 @@ const lastUpdateSpan = document.getElementById("last-update");
 const eventLog = document.getElementById("event-log");
 
 // ==== Chart (combined) ====
-const ctx = document.getElementById("combined-chart").getContext("2d");
+const canvas = document.getElementById("combined-chart");
+const ctx = canvas.getContext("2d");
+
 const combinedChart = new Chart(ctx, {
   type: "line",
   data: {
@@ -243,7 +245,7 @@ window.updateFromPayload = function (payload) {
 
   client.on('message', (topic, message) => {
     const s = message.toString();
-    // 258509481,ROOT,1,3637930473,TEMP=25.2,HUM=68.0,DIST=101.0
+    // example: 258509481,ROOT,1,3637930473,TEMP=25.2,HUM=68.0,DIST=101.0
     const parts = s.split(',');
 
     const payload = {
