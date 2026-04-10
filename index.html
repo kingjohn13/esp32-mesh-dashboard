@@ -47,11 +47,25 @@
       </div>
     </section>
 
-    <!-- Bottom row: chart + info + log -->
+    <!-- Bottom row: charts + info + log -->
     <section class="bottom">
       <div class="panel panel-chart">
-        <h2>Live Chart</h2>
-        <canvas id="combined-chart"></canvas>
+        <h2>Live Signals</h2>
+
+        <div class="charts-grid">
+          <div class="chart-item">
+            <div class="chart-title">Temp °C</div>
+            <canvas id="temp-chart"></canvas>
+          </div>
+          <div class="chart-item">
+            <div class="chart-title">Humidity %</div>
+            <canvas id="hum-chart"></canvas>
+          </div>
+          <div class="chart-item">
+            <div class="chart-title">Distance cm</div>
+            <canvas id="dist-chart"></canvas>
+          </div>
+        </div>
       </div>
 
       <div class="panel panel-info">
