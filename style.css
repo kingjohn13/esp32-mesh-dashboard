@@ -168,20 +168,20 @@ main.layout {
   color: var(--accent-soft);
 }
 
-/* Make sure chart panel doesn't stretch too tall */
+/* Make sure chart panel behaves nicely */
 .panel.panel-chart {
   display: flex;
   flex-direction: column;
   min-height: 0;
 }
 
-/* Charts: 3 slim “scope” panels in one horizontal strip */
+/* Charts: 3 stacked vertically (Temp, Humidity, Distance) */
 
 .charts-grid {
   display: grid;
-  grid-template-columns: 1fr;   /* one column */
+  grid-template-columns: 1fr;   /* one column -> vertical stack */
   gap: 0.6rem;
-  height: auto;                 /* let it grow vertically */
+  height: auto;
 }
 
 .chart-item {
@@ -245,7 +245,7 @@ main.layout {
   margin-right: 0.35rem;
 }
 
-/* Small screen: stack columns and charts vertically */
+/* Small screen: stack columns */
 
 @media (max-width: 768px) {
   main.layout {
@@ -259,12 +259,6 @@ main.layout {
   .bottom {
     grid-template-columns: 1fr;
     min-height: auto;
-  }
-
-  /* On mobile, charts stack vertically */
-  .charts-grid {
-    grid-template-columns: 1fr;
-    height: auto;
   }
 }
 
