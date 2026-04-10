@@ -1,11 +1,11 @@
 // ==== CONFIG: HIVEMQ CLOUD ====
 const MQTT_WS_URL =
   'wss://63a94dada2fa46b797e4d6fdf720f43f.s1.eu.hivemq.cloud:8884/mqtt';
-const MQTT_USERNAME = 'JunJuly';   // <-- change
-const MQTT_PASSWORD = 'JuneJuly1';   // <-- change
-const MQTT_TOPIC = 'esp32/mesh/debug';        // match your ESP32 publish topic
+const MQTT_USERNAME = 'JuneJuly';     // your user
+const MQTT_PASSWORD = 'JuneJuly1';    // your password
+const MQTT_TOPIC = 'esp32/mesh/debug';
 
-// ==== Simple local state ====
+// ==== State ====
 const state = {
   temp: null,
   hum: null,
@@ -16,7 +16,7 @@ const state = {
   neighbors: []
 };
 
-// ==== DOM refs ====
+// ==== DOM ====
 const tempSpan = document.getElementById("temp-value");
 const humSpan = document.getElementById("hum-value");
 const distSpan = document.getElementById("dist-value");
@@ -28,68 +28,102 @@ const connStatus = document.getElementById("conn-status");
 const lastUpdateSpan = document.getElementById("last-update");
 const eventLog = document.getElementById("event-log");
 
-// ==== Charts setup ====
-function createLineChart(ctx, color) {
-  return new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: [],
-      datasets: [
-        {
-          label: "",
-          data: [],
-          borderColor: color,
-          backgroundColor: color + "22",
-          borderWidth: 2,
-          tension: 0.25,
-          pointRadius: 0
-        }
-      ]
+// ==== Chart (combined) ====
+const ctx = document.getElementById("combined-chart").getContext("2d");
+const combinedChart = new Chart(ctx, {
+  type: "line",
+  data: {
+    labels: [],
+    datasets: [
+      {
+        label: "Temp °C",
+        data: [],
+        borderColor: "#66fcf1",
+        backgroundColor: "#66fcf122",
+        borderWidth: 2,
+        tension: 0.25,
+        pointRadius: 0,
+        yAxisID: "y1"
+      },
+      {
+        label: "Humidity %",
+        data: [],
+        borderColor: "#45a29e",
+        backgroundColor: "#45a29e22",
+        borderWidth: 2,
+        tension: 0.25,
+        pointRadius: 0,
+        yAxisID: "y2"
+      },
+      {
+        label: "Distance cm",
+        data: [],
+        borderColor: "#f2c94c",
+        backgroundColor: "#f2c94c22",
+        borderWidth: 2,
+        tension: 0.25,
+        pointRadius: 0,
+        yAxisID: "y3"
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "top",
+        labels: { color: "#c5c6c7", boxWidth: 8, font: { size: 10 } }
+      }
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { display: false },
-        y: {
-          ticks: { color: "#c5c6c7" },
-          grid: { color: "rgba(255,255,255,0.05)" }
-        }
+    scales: {
+      x: {
+        ticks: { color: "#c5c6c7", maxRotation: 0, autoSkip: true },
+        grid: { color: "rgba(255,255,255,0.05)" }
+      },
+      y1: {
+        type: "linear",
+        position: "left",
+        ticks: { color: "#66fcf1", font: { size: 9 } },
+        grid: { color: "rgba(255,255,255,0.05)" }
+      },
+      y2: {
+        type: "linear",
+        position: "right",
+        ticks: { color: "#45a29e", font: { size: 9 } },
+        grid: { display: false }
+      },
+      y3: {
+        type: "linear",
+        position: "right",
+        ticks: { color: "#f2c94c", font: { size: 9 } },
+        grid: { display: false },
+        offset: true
       }
     }
-  });
-}
+  }
+});
 
-const tempChart = createLineChart(
-  document.getElementById("temp-chart").getContext("2d"),
-  "#66fcf1"
-);
-const humChart = createLineChart(
-  document.getElementById("hum-chart").getContext("2d"),
-  "#45a29e"
-);
-const distChart = createLineChart(
-  document.getElementById("dist-chart").getContext("2d"),
-  "#f2c94c"
-);
-
-function pushToChart(chart, value) {
-  if (value == null || isNaN(value)) return;
-  const labels = chart.data.labels;
-  const data = chart.data.datasets[0].data;
+function pushToCombinedChart(temp, hum, dist) {
+  const labels = combinedChart.data.labels;
+  const d1 = combinedChart.data.datasets[0].data;
+  const d2 = combinedChart.data.datasets[1].data;
+  const d3 = combinedChart.data.datasets[2].data;
 
   const now = new Date();
   const t = now.toLocaleTimeString("en-US", { hour12: false });
 
   labels.push(t);
-  data.push(value);
+  d1.push(temp != null ? temp : null);
+  d2.push(hum != null ? hum : null);
+  d3.push(dist != null ? dist : null);
 
-  if (labels.length > 50) {
+  if (labels.length > 60) {
     labels.shift();
-    data.shift();
+    d1.shift(); d2.shift(); d3.shift();
   }
-  chart.update("none");
+
+  combinedChart.update("none");
 }
 
 // ==== Event log ====
@@ -106,9 +140,9 @@ function addEventLogEntry(payload) {
 
   const text = document.createTextNode(
     `ID=${payload.nodeId ?? "-"} ROLE=${payload.role ?? "-"} ` +
-      `TEMP=${payload.temp?.toFixed?.(1) ?? "-"} ` +
-      `HUM=${payload.hum?.toFixed?.(1) ?? "-"} ` +
-      `DIST=${payload.dist?.toFixed?.(1) ?? "-"}`
+      `T=${payload.temp?.toFixed?.(1) ?? "-"} ` +
+      `H=${payload.hum?.toFixed?.(1) ?? "-"} ` +
+      `D=${payload.dist?.toFixed?.(1) ?? "-"}`
   );
 
   li.appendChild(timeSpan);
@@ -116,7 +150,7 @@ function addEventLogEntry(payload) {
 
   eventLog.insertBefore(li, eventLog.firstChild);
 
-  while (eventLog.children.length > 30) {
+  while (eventLog.children.length > 40) {
     eventLog.removeChild(eventLog.lastChild);
   }
 }
@@ -139,12 +173,10 @@ function updateUI() {
   const now = new Date();
   lastUpdateSpan.textContent = "Last update: " + now.toLocaleTimeString();
 
-  pushToChart(tempChart, state.temp);
-  pushToChart(humChart, state.hum);
-  pushToChart(distChart, state.dist);
+  pushToCombinedChart(state.temp, state.hum, state.dist);
 }
 
-// ==== Connection badge helpers ====
+// ==== Connection badge ====
 function setConnected(flag) {
   if (!connStatus) return;
   if (flag) {
@@ -158,7 +190,7 @@ function setConnected(flag) {
   }
 }
 
-// Expose for MQTT / other inputs
+// ==== Update from parsed payload ====
 window.updateFromPayload = function (payload) {
   state.nodeId = payload.nodeId ?? state.nodeId;
   state.role = payload.role ?? state.role;
@@ -173,7 +205,7 @@ window.updateFromPayload = function (payload) {
   addEventLogEntry(payload);
 };
 
-// ==== MQTT: connect to HiveMQ Cloud over WebSockets ====
+// ==== MQTT: connect to HiveMQ Cloud ====
 (function setupMqtt() {
   const options = {
     clientId: 'web_' + Math.random().toString(16).slice(2),
@@ -211,8 +243,7 @@ window.updateFromPayload = function (payload) {
 
   client.on('message', (topic, message) => {
     const s = message.toString();
-    // example payload:
-    // 258509481,ROOT,1,3637930473,TEMP=25.7,HUM=61.0,DIST=102.0
+    // 258509481,ROOT,1,3637930473,TEMP=25.2,HUM=68.0,DIST=101.0
     const parts = s.split(',');
 
     const payload = {
