@@ -274,7 +274,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if (state.dist != null) distSpan.textContent = clampTo60(state.dist).toFixed(1);
 
     nodeIdSpan.textContent = state.nodeId ?? "-";
-    roleSpan.textContent = state.role ?? "-";
+    roleSpan.textContent = state.role ?? "ROOT";
     nodeCountSpan.textContent = state.nodes ?? 0;
 
     neighborsSpan.textContent =
@@ -363,7 +363,7 @@ window.addEventListener("DOMContentLoaded", () => {
       setConnected(false);
     });
 
-    // ===== FLEXIBLE PARSER: supports TEMP=/HUM=/DIST= OR simple CSV =====
+    // ===== FLEXIBLE PARSER =====
     client.on('message', (topic, message) => {
       const s = message.toString();
       const parts = s.split(',');
@@ -378,8 +378,12 @@ window.addEventListener("DOMContentLoaded", () => {
         dist: null
       };
 
-      // Format 1: nodeId,ROLE,nodes,...,TEMP=xx,HUM=yy,DIST=zz
-      if (parts.length >= 3 && (parts[1] === 'ROOT' || parts[1] === 'NODE')) {
+      const hasKeyStyle = parts.some(p =>
+        p.startsWith('TEMP=') || p.startsWith('HUM=') || p.startsWith('DIST=')
+      );
+
+      if (hasKeyStyle && parts.length >= 3 && (parts[1] === 'ROOT' || parts[1] === 'NODE')) {
+        // Format 1: nodeId,ROLE,nodes,...,TEMP=xx,HUM=yy,DIST=zz
         payload.nodeId = parts[0];
         payload.role = parts[1];
         payload.nodes = Number(parts[2]) || 0;
@@ -392,16 +396,15 @@ window.addEventListener("DOMContentLoaded", () => {
             payload.neighbors.push(p);
           }
         });
-      } else if (parts.length >= 3) {
-        // Format 2: nodeId,temp,distance,nodeCount  (your current gateway)
-        // Example: 123456789,25.30,12.45,3
+      } else if (parts.length >= 5) {
+        // Format 2: nodeId,temp,hum,dist,nodeCount
+        // Example: 3624150137,34.20,66.60,9.18,0
         payload.nodeId = parts[0];
         payload.role = "ROOT";
         payload.temp = Number(parts[1]);
-        payload.dist = Number(parts[2]);
-        if (parts.length >= 4) {
-          payload.nodes = Number(parts[3]) || 0;
-        }
+        payload.hum  = Number(parts[2]);
+        payload.dist = Number(parts[3]);
+        payload.nodes = Number(parts[4]) || 0;
       }
 
       window.updateFromPayload(payload);
