@@ -35,9 +35,9 @@ function clampTo100(value) {
 
 // Chart options (axes fixed, no animation)
 const options0to60 = {
-  responsive: false,               // lock chart size [web:227][web:229]
+  responsive: false,
   maintainAspectRatio: false,
-  animation: false,                // no movement during updates [web:286]
+  animation: false,
   layout: {
     padding: 0
   },
@@ -212,7 +212,7 @@ window.addEventListener("DOMContentLoaded", () => {
         tempChart.data.labels.shift();
         tempChart.data.datasets[0].data.shift();
       }
-      tempChart.update('none');   // no animation, stable axes [web:286]
+      tempChart.update('none');
     }
 
     // Humidity
@@ -317,12 +317,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
     setConnected(true);
 
-    // Only animate chart + log every 2nd message
     if (sampleCounter % 2 === 0) {
       updateUI();
       addEventLogEntry(payload);
     } else {
-      // Still keep numbers fresh
       if (state.temp != null) tempSpan.textContent = state.temp.toFixed(1);
       if (state.hum != null) humSpan.textContent = state.hum.toFixed(1);
       if (state.dist != null) distSpan.textContent = state.dist.toFixed(1);
@@ -365,9 +363,9 @@ window.addEventListener("DOMContentLoaded", () => {
       setConnected(false);
     });
 
+    // ===== FLEXIBLE PARSER: supports TEMP=/HUM=/DIST= OR simple CSV =====
     client.on('message', (topic, message) => {
       const s = message.toString();
-      // example: 258509481,ROOT,1,3637930473,TEMP=25.2,HUM=68.0,DIST=101.0
       const parts = s.split(',');
 
       const payload = {
@@ -380,20 +378,31 @@ window.addEventListener("DOMContentLoaded", () => {
         dist: null
       };
 
-      if (parts.length >= 3) {
+      // Format 1: nodeId,ROLE,nodes,...,TEMP=xx,HUM=yy,DIST=zz
+      if (parts.length >= 3 && (parts[1] === 'ROOT' || parts[1] === 'NODE')) {
         payload.nodeId = parts[0];
         payload.role = parts[1];
         payload.nodes = Number(parts[2]) || 0;
-      }
 
-      parts.forEach(p => {
-        if (p.startsWith('TEMP=')) payload.temp = Number(p.slice(5));
-        else if (p.startsWith('HUM=')) payload.hum = Number(p.slice(4));
-        else if (p.startsWith('DIST=')) payload.dist = Number(p.slice(5));
-        else if (!isNaN(Number(p)) && p !== payload.nodeId) {
-          payload.neighbors.push(p);
+        parts.forEach(p => {
+          if (p.startsWith('TEMP=')) payload.temp = Number(p.slice(5));
+          else if (p.startsWith('HUM=')) payload.hum = Number(p.slice(4));
+          else if (p.startsWith('DIST=')) payload.dist = Number(p.slice(5));
+          else if (!isNaN(Number(p)) && p !== payload.nodeId) {
+            payload.neighbors.push(p);
+          }
+        });
+      } else if (parts.length >= 3) {
+        // Format 2: nodeId,temp,distance,nodeCount  (your current gateway)
+        // Example: 123456789,25.30,12.45,3
+        payload.nodeId = parts[0];
+        payload.role = "ROOT";
+        payload.temp = Number(parts[1]);
+        payload.dist = Number(parts[2]);
+        if (parts.length >= 4) {
+          payload.nodes = Number(parts[3]) || 0;
         }
-      });
+      }
 
       window.updateFromPayload(payload);
     });
