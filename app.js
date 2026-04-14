@@ -204,7 +204,6 @@ window.addEventListener("DOMContentLoaded", () => {
     const cHum  = hum  != null ? clampTo100(hum)  : null;
     const cDist = dist != null ? clampTo60(dist)  : null;
 
-    // Temp
     if (cTemp != null) {
       tempChart.data.labels.push(t);
       tempChart.data.datasets[0].data.push(cTemp);
@@ -215,7 +214,6 @@ window.addEventListener("DOMContentLoaded", () => {
       tempChart.update('none');
     }
 
-    // Humidity
     if (cHum != null) {
       humChart.data.labels.push(t);
       humChart.data.datasets[0].data.push(cHum);
@@ -226,7 +224,6 @@ window.addEventListener("DOMContentLoaded", () => {
       humChart.update('none');
     }
 
-    // Distance
     if (cDist != null) {
       distChart.data.labels.push(t);
       distChart.data.datasets[0].data.push(cDist);
@@ -309,7 +306,6 @@ window.addEventListener("DOMContentLoaded", () => {
     state.nodeId = payload.nodeId ?? state.nodeId;
     state.role = payload.role ?? state.role;
     state.nodes = payload.nodes ?? state.nodes;
-    state.neighbors = payload.neighbors ?? state.neighbors;
 
     if (typeof payload.temp === "number") state.temp = clampTo60(payload.temp);
     if (typeof payload.hum === "number") state.hum = clampTo100(payload.hum);
@@ -363,14 +359,14 @@ window.addEventListener("DOMContentLoaded", () => {
       setConnected(false);
     });
 
-    // ===== FLEXIBLE PARSER =====
+    // ==== CSV PARSER ONLY: nodeId,temp,hum,dist,nodeCount ====
     client.on('message', (topic, message) => {
-      const s = message.toString();
+      const s = message.toString().trim();
       const parts = s.split(',');
 
       const payload = {
         nodeId: null,
-        role: null,
+        role: "ROOT",
         nodes: 0,
         neighbors: [],
         temp: null,
@@ -378,33 +374,13 @@ window.addEventListener("DOMContentLoaded", () => {
         dist: null
       };
 
-      const hasKeyStyle = parts.some(p =>
-        p.startsWith('TEMP=') || p.startsWith('HUM=') || p.startsWith('DIST=')
-      );
-
-      if (hasKeyStyle && parts.length >= 3 && (parts[1] === 'ROOT' || parts[1] === 'NODE')) {
-        // Format 1: nodeId,ROLE,nodes,...,TEMP=xx,HUM=yy,DIST=zz
-        payload.nodeId = parts[0];
-        payload.role = parts[1];
-        payload.nodes = Number(parts[2]) || 0;
-
-        parts.forEach(p => {
-          if (p.startsWith('TEMP=')) payload.temp = Number(p.slice(5));
-          else if (p.startsWith('HUM=')) payload.hum = Number(p.slice(4));
-          else if (p.startsWith('DIST=')) payload.dist = Number(p.slice(5));
-          else if (!isNaN(Number(p)) && p !== payload.nodeId) {
-            payload.neighbors.push(p);
-          }
-        });
-      } else if (parts.length >= 5) {
-        // Format 2: nodeId,temp,hum,dist,nodeCount
+      if (parts.length >= 5) {
         // Example: 3624150137,34.20,66.60,9.18,0
         payload.nodeId = parts[0];
-        payload.role = "ROOT";
-        payload.temp = Number(parts[1]);
-        payload.hum  = Number(parts[2]);
-        payload.dist = Number(parts[3]);
-        payload.nodes = Number(parts[4]) || 0;
+        payload.temp   = Number(parts[1]);
+        payload.hum    = Number(parts[2]);
+        payload.dist   = Number(parts[3]);
+        payload.nodes  = Number(parts[4]) || 0;
       }
 
       window.updateFromPayload(payload);
