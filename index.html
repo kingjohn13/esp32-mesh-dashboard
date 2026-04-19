@@ -2,92 +2,52 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ESP32 Mesh Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
   <link rel="stylesheet" href="style.css" />
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <script defer src="app.js"></script>
 </head>
 <body>
   <header class="top-bar">
     <div class="brand">ESP32 Mesh Dashboard</div>
     <div class="status">
-      <span id="conn-status" class="badge badge-disconnected">Disconnected</span>
+      <span class="badge badge-disconnected" id="conn-status">Disconnected</span>
       <span id="last-update" class="last-update">Last update: -</span>
     </div>
   </header>
 
   <main class="layout">
-    <!-- Top row: compact tiles -->
-    <section class="tiles">
-      <div class="tile">
-        <div class="tile-label">Temp</div>
-        <div class="tile-main">
-          <span id="temp-value" class="tile-value">--.-</span>
-          <span class="tile-unit">°C</span>
-        </div>
-      </div>
-
-      <div class="tile">
-        <div class="tile-label">Humidity</div>
-        <div class="tile-main">
-          <span id="hum-value" class="tile-value">--.-</span>
-          <span class="tile-unit">%</span>
-        </div>
-      </div>
-
-      <div class="tile">
-        <div class="tile-label">Distance</div>
-        <div class="tile-main">
-          <span id="dist-value" class="tile-value">--.-</span>
-          <span class="tile-unit">cm</span>
-        </div>
+    <section class="panel">
+      <h2>Mesh Overview</h2>
+      <div class="mesh-summary">
+        <span>Total Nodes (incl. root): <strong id="mesh-node-count">0</strong></span>
       </div>
     </section>
 
-    <!-- Bottom row: 3 separate chart panels + mesh info/log -->
-    <section class="bottom">
-      <!-- Left: three independent chart boxes -->
-      <div class="charts-column">
-        <div class="panel panel-chart-single">
-          <h2>Temperature</h2>
-          <div class="chart-wrapper">
-            <canvas id="temp-chart"></canvas>
-          </div>
-        </div>
-
-        <div class="panel panel-chart-single">
-          <h2>Humidity</h2>
-          <div class="chart-wrapper">
-            <canvas id="hum-chart"></canvas>
-          </div>
-        </div>
-
-        <div class="panel panel-chart-single">
-          <h2>Distance</h2>
-          <div class="chart-wrapper">
-            <canvas id="dist-chart"></canvas>
-          </div>
-        </div>
+    <section class="panel">
+      <h2>Nodes Table</h2>
+      <div class="table-wrapper">
+        <table class="nodes-table">
+          <thead>
+            <tr>
+              <th>Node ID</th>
+              <th>Role</th>
+              <th>Temp (°C)</th>
+              <th>Humidity (%)</th>
+              <th>Distance (cm)</th>
+              <th>Last Update</th>
+            </tr>
+          </thead>
+          <tbody id="nodes-tbody"></tbody>
+        </table>
       </div>
+    </section>
 
-      <!-- Right: mesh info + event log -->
-      <div class="panel panel-info">
-        <h2>Mesh Info</h2>
-        <div class="mesh-info">
-          <div>Node ID: <span id="node-id">-</span></div>
-          <div>Role: <span id="node-role">-</span></div>
-          <div>Nodes in Mesh: <span id="node-count">0</span></div>
-          <div>Neighbors: <span id="neighbors">-</span></div>
-        </div>
-        <h2 class="log-title">Event Log</h2>
-        <ul id="event-log" class="event-log"></ul>
-      </div>
+    <section class="panel">
+      <h2>Event Log</h2>
+      <ul class="event-log" id="event-log"></ul>
     </section>
   </main>
-
-  <script src="app.js"></script>
 </body>
 </html>
