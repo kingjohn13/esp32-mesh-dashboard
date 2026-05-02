@@ -47,29 +47,29 @@ window.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => tr.classList.remove("highlight"), 800);
       }
 
-      const tTemp = clamp(info.temp, 0, 60);
-      const tHum  = clamp(info.hum, 0, 100);
-      const tDist = clamp(info.dist, 0, 60);
+      const tTemp  = clamp(info.temp, 0, 60);
+      const tHum   = clamp(info.hum, 0, 100);
+      const tWater = clamp(info.water, 0, 60); // adjust max if your sensor height != 60
 
       const tdId   = document.createElement("td");
       const tdRole = document.createElement("td");
       const tdT    = document.createElement("td");
       const tdH    = document.createElement("td");
-      const tdD    = document.createElement("td");
+      const tdW    = document.createElement("td");
       const tdTime = document.createElement("td");
 
       tdId.textContent   = id;
       tdRole.textContent = info.role || "NODE";
-      tdT.textContent    = info.temp != null ? tTemp.toFixed(1) : "-";
-      tdH.textContent    = info.hum  != null ? tHum.toFixed(1)  : "-";
-      tdD.textContent    = info.dist != null ? tDist.toFixed(1) : "-";
+      tdT.textContent    = info.temp != null ? tTemp.toFixed(1)  : "-";
+      tdH.textContent    = info.hum  != null ? tHum.toFixed(1)   : "-";
+      tdW.textContent    = info.water != null ? tWater.toFixed(1) : "-";
       tdTime.textContent = info.lastUpdate || "-";
 
       tr.appendChild(tdId);
       tr.appendChild(tdRole);
       tr.appendChild(tdT);
       tr.appendChild(tdH);
-      tr.appendChild(tdD);
+      tr.appendChild(tdW);
       tr.appendChild(tdTime);
       tbody.appendChild(tr);
     });
@@ -93,7 +93,7 @@ window.addEventListener("DOMContentLoaded", () => {
       `ID=${nodeId} ` +
         `T=${data.temp != null ? data.temp.toFixed(1) : "-"} ` +
         `H=${data.hum != null ? data.hum.toFixed(1) : "-"} ` +
-        `D=${data.dist != null ? data.dist.toFixed(1) : "-"}`
+        `W=${data.water != null ? data.water.toFixed(1) : "-"}`
     );
 
     li.appendChild(timeSpan);
@@ -140,19 +140,19 @@ window.addEventListener("DOMContentLoaded", () => {
       setConnected(false);
     });
 
-    // Format: nodeId,ROLE,nodeCount,temp,hum,dist
+    // New format: nodeId,ROLE,nodeCount,temp,hum,waterLevel
     client.on('message', (topic, message) => {
       const s = message.toString().trim();
       const parts = s.split(',');
 
       if (parts.length < 6) return;
 
-      const nodeId  = parts[0];
-      const role    = parts[1];
-      const count   = Number(parts[2]) || 0;
-      const temp    = Number(parts[3]);
-      const hum     = Number(parts[4]);
-      const dist    = Number(parts[5]);
+      const nodeId      = parts[0];
+      const role        = parts[1];
+      const count       = Number(parts[2]) || 0;
+      const temp        = Number(parts[3]);
+      const hum         = Number(parts[4]);
+      const waterLevel  = Number(parts[5]);
 
       const now = new Date();
       const timeStr = now.toLocaleTimeString("en-US", { hour12: false });
@@ -161,7 +161,7 @@ window.addEventListener("DOMContentLoaded", () => {
         role: role,
         temp,
         hum,
-        dist,
+        water: waterLevel,
         lastUpdate: timeStr
       });
 
@@ -172,7 +172,7 @@ window.addEventListener("DOMContentLoaded", () => {
         meshNodeCountSpan.textContent = nodes.size;
       }
       renderTable(nodeId);
-      addEventLogEntry(nodeId, { temp, hum, dist });
+      addEventLogEntry(nodeId, { temp, hum, water: waterLevel });
     });
   })();
 });
