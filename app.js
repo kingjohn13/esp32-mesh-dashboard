@@ -4,6 +4,30 @@ const MQTT_USERNAME = 'JuneJuly';
 const MQTT_PASSWORD = 'JuneJuly1';
 const MQTT_TOPIC = 'esp32/mesh/debug';
 
+// ── Node alias map ──────────────────────────────────────────────
+// Add your node addresses and their friendly names here.
+// The key should match the exact ID string sent by the ESP32.
+const NODE_ALIASES = {
+  '3624150137': 'Node 1',   // address ending in 137
+  '3637940729': 'Node 2',
+  '258499465': 'Node 3',
+  '258509481': 'Node 4',
+
+  // '2886664201': 'Node 2', // add more nodes here
+};
+
+function getNodeLabel(rawId) {
+  // 1. Exact match
+  if (NODE_ALIASES[rawId]) return NODE_ALIASES[rawId];
+  // 2. Fallback: match by last 3 digits
+  const suffix = rawId.slice(-3);
+  for (const [key, label] of Object.entries(NODE_ALIASES)) {
+    if (key.endsWith(suffix)) return label;
+  }
+  // 3. Unknown node — show raw ID as-is
+  return rawId;
+}
+
 const nodes = new Map();
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -49,7 +73,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
       const tTemp  = clamp(info.temp, 0, 60);
       const tHum   = clamp(info.hum, 0, 100);
-      const tWater = clamp(info.water, 0, 60); // adjust max if your sensor height != 60
+      const tWater = clamp(info.water, 0, 60);
 
       const tdId   = document.createElement("td");
       const tdRole = document.createElement("td");
@@ -58,10 +82,10 @@ window.addEventListener("DOMContentLoaded", () => {
       const tdW    = document.createElement("td");
       const tdTime = document.createElement("td");
 
-      tdId.textContent   = id;
+      tdId.textContent   = getNodeLabel(id);   // ← friendly name
       tdRole.textContent = info.role || "NODE";
-      tdT.textContent    = info.temp != null ? tTemp.toFixed(1)  : "-";
-      tdH.textContent    = info.hum  != null ? tHum.toFixed(1)   : "-";
+      tdT.textContent    = info.temp  != null ? tTemp.toFixed(1)  : "-";
+      tdH.textContent    = info.hum   != null ? tHum.toFixed(1)   : "-";
       tdW.textContent    = info.water != null ? tWater.toFixed(1) : "-";
       tdTime.textContent = info.lastUpdate || "-";
 
@@ -90,9 +114,9 @@ window.addEventListener("DOMContentLoaded", () => {
     timeSpan.textContent = timeStr;
 
     const text = document.createTextNode(
-      `ID=${nodeId} ` +
-        `T=${data.temp != null ? data.temp.toFixed(1) : "-"} ` +
-        `H=${data.hum != null ? data.hum.toFixed(1) : "-"} ` +
+      `ID=${getNodeLabel(nodeId)} ` +   // ← friendly name in log too
+        `T=${data.temp  != null ? data.temp.toFixed(1)  : "-"} ` +
+        `H=${data.hum   != null ? data.hum.toFixed(1)   : "-"} ` +
         `W=${data.water != null ? data.water.toFixed(1) : "-"}`
     );
 
@@ -140,7 +164,7 @@ window.addEventListener("DOMContentLoaded", () => {
       setConnected(false);
     });
 
-    // New format: nodeId,ROLE,nodeCount,temp,hum,waterLevel
+    // Message format: nodeId,ROLE,nodeCount,temp,hum,waterLevel
     client.on('message', (topic, message) => {
       const s = message.toString().trim();
       const parts = s.split(',');
